@@ -1,4 +1,5 @@
-use tree::traits::*;
+use super::traits::*;
+use super::values::*;
 
 type Node = Box<TreeNode>;
 
@@ -6,7 +7,9 @@ type Node = Box<TreeNode>;
 /// A tree whose structure is kept in-memory and which has no pre-defined structure
 ///
 pub struct MemoryTree {
-    child_nodes: Vec<Node>
+    child_nodes: Vec<Node>,
+    tag: String,
+    value: TreeValue
 }
 
 impl TreeNode for MemoryTree {
@@ -23,11 +26,28 @@ impl TreeNode for MemoryTree {
     fn get_child(&self, index: u32) -> &TreeNode {
         &*self.child_nodes[index as usize]
     }
+
+    ///
+    /// Retrieves the tag attached to this tree node
+    ///
+    fn get_tag(&self) -> &str {
+        &self.tag
+    }
+
+    ///
+    /// Retrieves the value attached to this node
+    ///
+    fn get_value(&self) -> &TreeValue {
+        &self.value
+    }
 }
 
 impl MemoryTree {
-    pub fn new() -> MemoryTree {
-        MemoryTree { child_nodes: Vec::<Node>::new() }
+    ///
+    /// Creates a new memory tree node, with a particular tag but no value
+    ///
+    pub fn new(tag: &str) -> MemoryTree {
+        MemoryTree { tag: tag.to_string(), value: TreeValue::Nothing, child_nodes: Vec::<Node>::new() }
     }
 
     ///
@@ -45,11 +65,12 @@ mod memorytree_tests {
 
     #[test]
     fn can_add_child() {
-        let mut tree = MemoryTree::new();
-        let child_node = Box::new(MemoryTree::new());
+        let mut tree = MemoryTree::new("root");
+        let child_node = Box::new(MemoryTree::new("child"));
 
         tree.add_child(child_node);
 
         assert!(tree.count_children() == 1);
+        assert!(tree.get_child(0).get_tag() == "child");
     }
 }

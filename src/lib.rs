@@ -31,10 +31,3 @@
 //! Where UNIX uses streams for communication, TreeSync instead uses trees to better support interactive applications.
 
 pub mod tree;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-    }
-}
