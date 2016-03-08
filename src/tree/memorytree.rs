@@ -46,15 +46,24 @@ impl MemoryTree {
     ///
     /// Creates a new memory tree node, with a particular tag but no value
     ///
-    pub fn new(tag: &str) -> MemoryTree {
-        MemoryTree { tag: tag.to_string(), value: TreeValue::Nothing, child_nodes: Vec::<Node>::new() }
+    pub fn new(tag: &str, value: TreeValue) -> MemoryTree {
+        MemoryTree { tag: tag.to_string(), value: value, child_nodes: Vec::<Node>::new() }
     }
 
     ///
     /// Adds a new child node to this tree
     ///
-    pub fn add_child(&mut self, new_node: Box<TreeNode>) {
+    pub fn add_child(&mut self, new_node: Box<TreeNode>) -> &mut MemoryTree {
         self.child_nodes.push(new_node);
+        self
+    }
+
+    ///
+    /// Removes a node from this tree
+    ///
+    pub fn remove_child(&mut self, index: u32) -> &mut MemoryTree {
+        self.child_nodes.remove(index as usize);
+        self
     }
 }
 
@@ -62,11 +71,12 @@ impl MemoryTree {
 mod memorytree_tests {
     use super::*;
     use tree::traits::*;
+    use tree::values::*;
 
     #[test]
     fn can_add_child() {
-        let mut tree = MemoryTree::new("root");
-        let child_node = Box::new(MemoryTree::new("child"));
+        let mut tree = MemoryTree::new("root", TreeValue::Nothing);
+        let child_node = Box::new(MemoryTree::new("child", TreeValue::Nothing));
 
         tree.add_child(child_node);
 
