@@ -1,0 +1,6 @@
+[package]
+name = "treesync"
+version = "0.1.0"
+authors = ["Andrew Hunter <andrew@logicalshift.io>"]
+
+[dependencies]
