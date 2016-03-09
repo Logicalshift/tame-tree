@@ -41,13 +41,13 @@ impl ToTreeValue for f64 {
 }
 
 impl ToTreeValue for str {
-    fn to_tree_value(&self) -> TreeValue { TreeValue::String(self.to_string()) }
+    fn to_tree_value(&self) -> TreeValue { TreeValue::String(self.to_owned()) }
 }
 
 impl ToTreeValue for String {
-    fn to_tree_value(&self) -> TreeValue { TreeValue::String(self.to_string()) }
+    fn to_tree_value(&self) -> TreeValue { TreeValue::String(self.to_owned()) }
 }
 
 impl ToTreeValue for Vec<u8> {
-    fn to_tree_value(&self) -> TreeValue { TreeValue::Data(self.to_vec()) }
+    fn to_tree_value(&self) -> TreeValue { TreeValue::Data(self.to_owned()) }
 }
