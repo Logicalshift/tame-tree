@@ -56,6 +56,15 @@ pub trait MutableTreeNode : TreeNode {
     fn set_value<TValue: ToTreeValue>(&mut self, new_value: TValue) -> &mut Self;
 }
 
+impl<T> ToTreeNode for T where T: TreeNode, T: Clone, T: 'static {
+    ///
+    /// Converts this value into a tree node
+    ///
+    fn to_tree_node(&self) -> Rc<TreeNode> {
+        Rc::new(self.clone())
+    }
+}
+
 impl ToTreeNode for Rc<TreeNode> {
     ///
     /// Converts this value into a tree node

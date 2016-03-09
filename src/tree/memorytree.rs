@@ -75,15 +75,6 @@ impl Clone for MemoryTree {
     }
 }
 
-impl ToTreeNode for MemoryTree {
-    ///
-    /// Converts this value into a tree node
-    ///
-    fn to_tree_node(&self) -> Rc<TreeNode> {
-        Rc::new(self.to_owned())
-    }
-}
-
 impl MemoryTree {
     ///
     /// Creates a new memory tree node, with a particular tag but no value
