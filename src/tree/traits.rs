@@ -1,7 +1,7 @@
 use super::values::*;
 
 ///
-/// The treenode trait is implemented by things that can act as part of a tree
+/// The treenode trait is implemented by types that can act as part of a tree
 ///
 pub trait TreeNode {
     ///
@@ -23,4 +23,34 @@ pub trait TreeNode {
     /// Retrieves the value attached to this node
     ///
     fn get_value(&self) -> &TreeValue;
+}
+
+///
+/// This trait is implemented by types that can be converted into a tree node.
+///
+pub trait ToTreeNode {
+    ///
+    /// Converts this value into a tree node
+    ///
+    fn to_tree_node(&self) -> Box<TreeNode>;
+}
+
+///
+/// This trait is implemented by tree nodes that can be changed
+///
+pub trait MutableTreeNode : TreeNode {
+    ///
+    /// Adds a new child node to this node. Returns the same node so many nodes can be altered as part of a single statement.
+    ///
+    fn add_child(&mut self, newNode: ToTreeNode) -> &MutableTreeNode;
+
+    ///
+    /// Removes the child node at the specified index. Returns the same node so many nodes can be altered as part of a single statement
+    ///
+    fn remove_child(&mut self, index: u32) -> &MutableTreeNode;
+
+    ///
+    /// Changes the value set for this node. Returns the same node so many nodes can be altered as part of a single statement.
+    ///
+    fn set_value(&mut self, newValue: ToTreeValue) -> &MutableTreeNode;
 }
