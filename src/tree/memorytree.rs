@@ -53,6 +53,14 @@ impl MutableTreeNode for MemoryTree {
     }
 
     ///
+    /// Replaces a child node with a different one
+    ///
+    fn replace_child_ref(&mut self, replacement_node: Rc<TreeNode>, at_index: u32) -> &mut MutableTreeNode {
+        self.child_nodes[at_index as usize] = replacement_node;
+        self
+    }
+
+    ///
     /// Removes a node from this tree
     ///
     fn remove_child(&mut self, index: u32) -> &mut MutableTreeNode {
