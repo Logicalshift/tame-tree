@@ -43,7 +43,7 @@ pub trait MutableTreeNode : TreeNode {
     ///
     /// Adds a new child node to this node. Returns the same node so many nodes can be altered as part of a single statement.
     ///
-    fn add_child<TNode: ToTreeNode>(&mut self, new_node: TNode) -> &mut Self;
+    fn add_child<TNode: ToTreeNode>(&mut self, new_node: TNode, at_index: u32) -> &mut Self;
 
     ///
     /// Removes the child node at the specified index. Returns the same node so many nodes can be altered as part of a single statement

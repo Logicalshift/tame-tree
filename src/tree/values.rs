@@ -17,14 +17,8 @@ pub trait ToTreeValue {
 }
 
 impl ToTreeValue for TreeValue {
-    fn to_tree_value(&self) -> TreeValue { 
-        match *self {
-            TreeValue::Nothing          => TreeValue::Nothing,
-            TreeValue::Int(v)           => TreeValue::Int(v),
-            TreeValue::Real(f)          => TreeValue::Real(f),
-            TreeValue::String(ref s)    => TreeValue::String(s.to_string()),
-            TreeValue::Data(ref d)      => TreeValue::Data(d.to_vec())
-        }
+    fn to_tree_value(&self) -> TreeValue {
+        return self.clone();
     }
 }
 
@@ -50,4 +44,16 @@ impl ToTreeValue for String {
 
 impl ToTreeValue for Vec<u8> {
     fn to_tree_value(&self) -> TreeValue { TreeValue::Data(self.to_owned()) }
+}
+
+impl Clone for TreeValue {
+    fn clone(&self) -> TreeValue {
+        match *self {
+            TreeValue::Nothing          => TreeValue::Nothing,
+            TreeValue::Int(v)           => TreeValue::Int(v),
+            TreeValue::Real(f)          => TreeValue::Real(f),
+            TreeValue::String(ref s)    => TreeValue::String(s.to_string()),
+            TreeValue::Data(ref d)      => TreeValue::Data(d.to_vec())
+        }
+    }
 }
