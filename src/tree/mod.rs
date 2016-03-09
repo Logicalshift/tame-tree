@@ -1,8 +1,8 @@
 
-pub use self::traits::*;
+pub use self::treenode::*;
 pub use self::values::*;
 pub use self::memorytree::*;
 
-mod traits;
+mod treenode;
 mod values;
 mod memorytree;

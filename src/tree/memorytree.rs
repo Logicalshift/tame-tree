@@ -1,4 +1,4 @@
-use super::traits::*;
+use super::treenode::*;
 use super::values::*;
 use std::rc::*;
 
@@ -87,7 +87,7 @@ impl MemoryTree {
 #[cfg(test)]
 mod memorytree_tests {
     use super::*;
-    use tree::traits::*;
+    use super::super::treenode::*;
 
     #[test]
     fn can_add_child() {
