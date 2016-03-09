@@ -43,17 +43,50 @@ pub trait MutableTreeNode : TreeNode {
     ///
     /// Adds a new child node to this node. Returns the same node so many nodes can be altered as part of a single statement.
     ///
-    fn add_child<TNode: ToTreeNode>(&mut self, new_node: TNode, at_index: u32) -> &mut Self;
+    fn add_child_ref(&mut self, new_node: Rc<TreeNode>, at_index: u32) -> &mut MutableTreeNode;
 
     ///
     /// Removes the child node at the specified index. Returns the same node so many nodes can be altered as part of a single statement
     ///
-    fn remove_child(&mut self, index: u32) -> &mut Self;
+    fn remove_child(&mut self, index: u32) -> &mut MutableTreeNode;
 
     ///
     /// Changes the value set for this node. Returns the same node so many nodes can be altered as part of a single statement.
     ///
-    fn set_value<TValue: ToTreeValue>(&mut self, new_value: TValue) -> &mut Self;
+    fn set_tree_value(&mut self, new_value: TreeValue) -> &mut MutableTreeNode;
+}
+
+///
+/// Trait that provides some sugar functions that makes MutableTreeNode easier to use
+///
+pub trait MutableTreeNodeSugar : MutableTreeNode {
+    ///
+    /// Adds a new child node to this node. Returns the same node so many nodes can be altered as part of a single statement.
+    ///
+    fn add_child<TNode: ToTreeNode>(&mut self, new_node: TNode, at_index: u32) -> &mut MutableTreeNode;
+
+    ///
+    /// Changes the value set for this node. Returns the same node so many nodes can be altered as part of a single statement.
+    ///
+    fn set_value<TValue: ToTreeValue>(&mut self, new_value: TValue) -> &mut MutableTreeNode;
+}
+
+impl<T: MutableTreeNode> MutableTreeNodeSugar for T {
+    ///
+    /// Adds a new child node to this node. Returns the same node so many nodes can be altered as part of a single statement.
+    ///
+    fn add_child<TNode: ToTreeNode>(&mut self, new_node: TNode, at_index: u32) -> &mut MutableTreeNode {
+        self.add_child_ref(new_node.to_tree_node(), at_index);
+        self
+    }
+
+    ///
+    /// Changes the value set for this node. Returns the same node so many nodes can be altered as part of a single statement.
+    ///
+    fn set_value<TValue: ToTreeValue>(&mut self, new_value: TValue) -> &mut MutableTreeNode {
+        self.set_tree_value(new_value.to_tree_value());
+        self
+    }
 }
 
 impl<T> ToTreeNode for T where T: TreeNode, T: Clone, T: 'static {

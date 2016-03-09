@@ -47,15 +47,15 @@ impl MutableTreeNode for MemoryTree {
     ///
     /// Adds a new child node to this node. Returns the same node so many nodes can be altered as part of a single statement.
     ///
-    fn add_child<TNode: ToTreeNode>(&mut self, new_node: TNode, at_index: u32) -> &mut MemoryTree {
-        self.child_nodes.insert(at_index as usize, new_node.to_tree_node());
+    fn add_child_ref(&mut self, new_node: Rc<TreeNode>, at_index: u32) -> &mut MutableTreeNode {
+        self.child_nodes.insert(at_index as usize, new_node);
         self
     }
 
     ///
     /// Removes a node from this tree
     ///
-    fn remove_child(&mut self, index: u32) -> &mut MemoryTree {
+    fn remove_child(&mut self, index: u32) -> &mut MutableTreeNode {
         self.child_nodes.remove(index as usize);
         self
     }
@@ -63,8 +63,8 @@ impl MutableTreeNode for MemoryTree {
     ///
     /// Changes the value set for this node. Returns the same node so many nodes can be altered as part of a single statement.
     ///
-    fn set_value<TValue: ToTreeValue>(&mut self, new_value: TValue) -> &mut MemoryTree {
-        self.value = new_value.to_tree_value();
+    fn set_tree_value(&mut self, new_value: TreeValue) -> &mut MutableTreeNode {
+        self.value = new_value;
         self
     }
 }
