@@ -1,7 +1,8 @@
 use super::traits::*;
 use super::values::*;
+use std::rc::*;
 
-type Node = Box<TreeNode>;
+type Node = Rc<TreeNode>;
 
 ///
 /// A tree whose structure is kept in-memory and which has no pre-defined structure
@@ -42,28 +43,48 @@ impl TreeNode for MemoryTree {
     }
 }
 
-impl MemoryTree {
+impl MutableTreeNode for MemoryTree {
     ///
-    /// Creates a new memory tree node, with a particular tag but no value
+    /// Adds a new child node to this node. Returns the same node so many nodes can be altered as part of a single statement.
     ///
-    pub fn new<TValue: ToTreeValue>(tag: &str, value: TValue) -> MemoryTree {
-        MemoryTree { tag: tag.to_string(), value: value.to_tree_value(), child_nodes: Vec::<Node>::new() }
-    }
-
-    ///
-    /// Adds a new child node to this tree
-    ///
-    pub fn add_child(&mut self, new_node: Box<TreeNode>) -> &mut MemoryTree {
-        self.child_nodes.push(new_node);
+    fn add_child<TNode: ToTreeNode>(&mut self, new_node: TNode) -> &mut MemoryTree {
+        self.child_nodes.push(new_node.to_tree_node());
         self
     }
 
     ///
     /// Removes a node from this tree
     ///
-    pub fn remove_child(&mut self, index: u32) -> &mut MemoryTree {
+    fn remove_child(&mut self, index: u32) -> &mut MemoryTree {
         self.child_nodes.remove(index as usize);
         self
+    }
+
+    ///
+    /// Changes the value set for this node. Returns the same node so many nodes can be altered as part of a single statement.
+    ///
+    fn set_value<TValue: ToTreeValue>(&mut self, new_value: TValue) -> &mut MemoryTree {
+        self.value = new_value.to_tree_value();
+        self
+    }
+}
+
+impl ToTreeNode for MemoryTree {
+    ///
+    /// Converts this value into a tree node
+    ///
+    fn to_tree_node(&self) -> Rc<TreeNode> {
+        // TODO: supporting to_owned might be better in many ways
+        Rc::new(MemoryTree { tag: self.tag.to_string(), value: self.value.to_tree_value(), child_nodes: self.child_nodes.to_vec() })
+    }
+}
+
+impl MemoryTree {
+    ///
+    /// Creates a new memory tree node, with a particular tag but no value
+    ///
+    pub fn new<TValue: ToTreeValue>(tag: &str, value: TValue) -> MemoryTree {
+        MemoryTree { tag: tag.to_string(), value: value.to_tree_value(), child_nodes: Vec::<Node>::new() }
     }
 }
 
@@ -75,7 +96,7 @@ mod memorytree_tests {
     #[test]
     fn can_add_child() {
         let mut tree = MemoryTree::new("root", ());
-        let child_node = Box::new(MemoryTree::new("child", ()));
+        let child_node = MemoryTree::new("child", ());
 
         tree.add_child(child_node);
 
