@@ -16,6 +16,11 @@ pub trait TreeNode {
     fn get_child(&self, index: u32) -> &TreeNode;
 
     ///
+    /// Retrieves a reference to the child at the specified index
+    ///
+    fn get_child_ref(&self, index: u32) -> &Rc<TreeNode>;
+
+    ///
     /// Retrieves the tag attached to this tree node
     ///
     fn get_tag(&self) -> &str;
@@ -54,6 +59,11 @@ pub trait MutableTreeNode : TreeNode {
     /// Removes the child node at the specified index. Returns the same node so many nodes can be altered as part of a single statement
     ///
     fn remove_child(&mut self, index: u32) -> &mut MutableTreeNode;
+
+    ///
+    /// Returns a reference to a mutable version of a particular child node
+    ///
+    fn alter_child(&mut self, at_index: u32) -> &mut MutableTreeNode;
 
     ///
     /// Changes the value set for this node. Returns the same node so many nodes can be altered as part of a single statement.

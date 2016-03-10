@@ -18,7 +18,13 @@ pub trait ToTreeValue {
 
 impl ToTreeValue for TreeValue {
     fn to_tree_value(&self) -> TreeValue {
-        return self.clone();
+        self.clone()
+    }
+}
+
+impl<'a> ToTreeValue for &'a TreeValue {
+    fn to_tree_value(&self) -> TreeValue {
+        (*self).clone()
     }
 }
 

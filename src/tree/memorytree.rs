@@ -29,6 +29,13 @@ impl TreeNode for MemoryTree {
     }
 
     ///
+    /// Retrieves a reference to the child at the specified index
+    ///
+    fn get_child_ref(&self, index: u32) -> &Rc<TreeNode> {
+        &(self.child_nodes[index as usize])
+    }
+
+    ///
     /// Retrieves the tag attached to this tree node
     ///
     fn get_tag(&self) -> &str {
@@ -75,6 +82,29 @@ impl MutableTreeNode for MemoryTree {
         self.value = new_value;
         self
     }
+
+    ///
+    /// Returns a reference to a mutable version of a particular child node
+    ///
+    fn alter_child(&mut self, at_index: u32) -> &mut MutableTreeNode {
+        // Try to get the child as a mutable reference
+        let array_index = at_index as usize;
+        let mutable_child = Rc::get_mut(self.child_nodes[array_index]);
+
+        // The child may be referenced in multiple places
+        match mutable_child {
+            // We'll get a mutable result if we're the sole owner
+            Some(child) => return child,
+
+            // None indicates that the child is shared, so we need to create a copy
+            None => {
+                // Generate a copy of this child
+                self.child_nodes[array_index] = MemoryTree::from(self.child_nodes[array_index]);
+
+                return Rc::get_mut(&mut self.child_nodes[array_index]).unwrap();
+            }
+        }
+    }
 }
 
 impl Clone for MemoryTree {
@@ -89,6 +119,23 @@ impl MemoryTree {
     ///
     pub fn new<TValue: ToTreeValue>(tag: &str, value: TValue) -> MemoryTree {
         MemoryTree { tag: tag.to_string(), value: value.to_tree_value(), child_nodes: Vec::<Node>::new() }
+    }
+
+    ///
+    /// Creates a new tree node from an existing node
+    ///
+    pub fn from<TNode: ToTreeNode>(node: TNode) -> MemoryTree {
+        let as_tree_node = node.to_tree_node();
+
+        // Generate the node
+        let mut result = MemoryTree::new(as_tree_node.get_tag(), as_tree_node.get_value());
+
+        // Copy (well, reference) the other node's child nodes into this one
+        for child_id in 0..as_tree_node.count_children() {
+            result.add_child_ref(as_tree_node.get_child_ref(child_id).to_tree_node(), child_id);
+        }
+
+        result
     }
 }
 
