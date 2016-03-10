@@ -4,18 +4,18 @@ use super::treenode::*;
 ///
 /// Trait implemented by types that can work as a tree node index
 ///
-pub trait TreeNodeIndex : Sized {
+pub trait TreeNodeIndex {
     ///
     /// Finds the tree node corresponding to the specified index in the tree
     ///
-    fn lookup_index<'a, T: TreeNode>(&'a self, parent_node: &'a T) -> Option<&Rc<TreeNode>>;
+    fn lookup_index<T: TreeNode>(&'static self, parent_node: &'static T) -> Option<&Rc<TreeNode>>;
 }
 
 impl TreeNodeIndex for usize {
     ///
     /// Finds the tree node corresponding to the specified index in the tree
     ///
-    fn lookup_index<'a, T: TreeNode>(&'a self, parent_node: &'a T) -> Option<&Rc<TreeNode>> {
+    fn lookup_index<T: TreeNode>(&'static self, parent_node: &'static T) -> Option<&Rc<TreeNode>> {
         let mut pos = *self;
         let mut current_child = parent_node.get_child_ref().to_owned();
 
@@ -40,14 +40,14 @@ pub trait TreeNodeLookup : TreeNode {
     ///
     /// Looks up a child node at a particular index (panics if the child does not exist)
     ///
-    fn get_child_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> &TreeNode;
+    fn get_child_at<TIndex: TreeNodeIndex>(&'static self, index: TIndex) -> &TreeNode where TIndex: 'static;
 }
 
 impl<T: TreeNode> TreeNodeLookup for T {
     ///
     /// Looks up a child node at a particular index (panics if the child does not exist)
     ///
-    fn get_child_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> &TreeNode {
+    fn get_child_at<TIndex: TreeNodeIndex>(&'static self, index: TIndex) -> &TreeNode where TIndex: 'static {
         let opt_node = index.lookup_index(self);
         let node_ref = opt_node.unwrap();
 
