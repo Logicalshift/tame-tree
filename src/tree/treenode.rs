@@ -6,19 +6,14 @@ use std::rc::*;
 ///
 pub trait TreeNode {
     ///
-    /// Counts the number of children of this tree node
+    /// Retrieves a reference to the child of this tree node (or None if this node has no child)
     ///
-    fn count_children(&self) -> u32;
+    fn get_child_ref(&self) -> Option<&Rc<TreeNode>>;
 
     ///
-    /// Retrieves the child at the specified index
+    /// Retrieves a reference to the sibling of this tree node (or None if this node has no sibling)
     ///
-    fn get_child(&self, index: u32) -> &TreeNode;
-
-    ///
-    /// Retrieves a reference to the child at the specified index
-    ///
-    fn get_child_ref(&self, index: u32) -> &Rc<TreeNode>;
+    fn get_sibling_ref(&self) -> Option<&Rc<TreeNode>>;
 
     ///
     /// Retrieves the tag attached to this tree node
@@ -46,26 +41,37 @@ pub trait ToTreeNode {
 ///
 pub trait MutableTreeNode : TreeNode {
     ///
-    /// Adds a new child node to this node. Returns the same node so many nodes can be altered as part of a single statement.
+    /// Sets the child for this tree node
     ///
-    fn add_child_ref(&mut self, new_node: Rc<TreeNode>, at_index: u32) -> &mut MutableTreeNode;
+    fn set_child_ref(&mut self, new_node: Rc<TreeNode>);
 
     ///
-    /// Replaces a child node with a different one
+    /// Sets the sibling for this tree node
     ///
-    fn replace_child_ref(&mut self, replacement_node: Rc<TreeNode>, at_index: u32) -> &mut MutableTreeNode;
+    fn set_sibling_ref(&mut self, new_node: Rc<TreeNode>);
 
     ///
-    /// Removes the child node at the specified index. Returns the same node so many nodes can be altered as part of a single statement
+    /// Unsets the child for this node
     ///
-    fn remove_child(&mut self, index: u32) -> &mut MutableTreeNode;
-    
+    fn clear_child(&mut self);
+
     ///
-    /// Changes the value set for this node. Returns the same node so many nodes can be altered as part of a single statement.
+    /// Unsets the sibling for this node
     ///
-    fn set_tree_value(&mut self, new_value: TreeValue) -> &mut MutableTreeNode;
+    fn clear_sibling(&mut self);
+
+    ///
+    /// Changes the value set for this node.
+    ///
+    fn set_tree_value(&mut self, new_value: TreeValue);
+
+    ///
+    /// Changes the tag attached to this tree
+    ///
+    fn set_tag(&mut self, new_tag: &str);
 }
 
+/*
 ///
 /// Trait that provides some sugar functions that makes MutableTreeNode easier to use
 ///
@@ -111,6 +117,7 @@ impl<T: MutableTreeNode> MutableTreeNodeSugar for T {
         self
     }
 }
+*/
 
 impl<T> ToTreeNode for T where T: TreeNode, T: Clone, T: 'static {
     ///

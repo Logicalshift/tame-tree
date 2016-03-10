@@ -16,6 +16,15 @@ pub trait ToTreeValue {
     fn to_tree_value(&self) -> TreeValue;
 }
 
+impl TreeValue {
+    pub fn is_nothing(&self) -> bool {
+        match *self {
+            TreeValue::Nothing => true,
+            _ => false
+        }
+    }
+}
+
 impl ToTreeValue for TreeValue {
     fn to_tree_value(&self) -> TreeValue {
         self.clone()
