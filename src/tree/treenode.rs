@@ -1,6 +1,9 @@
 use super::values::*;
 use std::rc::*;
 
+pub use super::treenode_sugar::*;
+pub use super::treenode_index::*;
+
 ///
 /// The treenode trait is implemented by types that can act as part of a tree
 ///
@@ -70,54 +73,6 @@ pub trait MutableTreeNode : TreeNode {
     ///
     fn set_tag(&mut self, new_tag: &str);
 }
-
-/*
-///
-/// Trait that provides some sugar functions that makes MutableTreeNode easier to use
-///
-pub trait MutableTreeNodeSugar : MutableTreeNode {
-    ///
-    /// Adds a new child node to this node. Returns the same node so many nodes can be altered as part of a single statement.
-    ///
-    fn add_child<TNode: ToTreeNode>(&mut self, new_node: TNode, at_index: u32) -> &mut MutableTreeNode;
-
-    ///
-    /// Replaces a child node with a different one
-    ///
-    fn replace_child<TNode: ToTreeNode>(&mut self, replacement_node: TNode, at_index: u32) -> &mut MutableTreeNode;
-
-    ///
-    /// Changes the value set for this node. Returns the same node so many nodes can be altered as part of a single statement.
-    ///
-    fn set_value<TValue: ToTreeValue>(&mut self, new_value: TValue) -> &mut MutableTreeNode;
-}
-
-impl<T: MutableTreeNode> MutableTreeNodeSugar for T {
-    ///
-    /// Adds a new child node to this node. Returns the same node so many nodes can be altered as part of a single statement.
-    ///
-    fn add_child<TNode: ToTreeNode>(&mut self, new_node: TNode, at_index: u32) -> &mut MutableTreeNode {
-        self.add_child_ref(new_node.to_tree_node(), at_index);
-        self
-    }
-
-    ///
-    /// Changes the value set for this node. Returns the same node so many nodes can be altered as part of a single statement.
-    ///
-    fn set_value<TValue: ToTreeValue>(&mut self, new_value: TValue) -> &mut MutableTreeNode {
-        self.set_tree_value(new_value.to_tree_value());
-        self
-    }
-
-    ///
-    /// Replaces a child node with a different one
-    ///
-    fn replace_child<TNode: ToTreeNode>(&mut self, replacement_node: TNode, at_index: u32) -> &mut MutableTreeNode {
-        self.replace_child_ref(replacement_node.to_tree_node(), at_index);
-        self
-    }
-}
-*/
 
 impl<T> ToTreeNode for T where T: TreeNode, T: Clone, T: 'static {
     ///
