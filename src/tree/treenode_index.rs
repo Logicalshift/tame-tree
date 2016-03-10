@@ -4,7 +4,7 @@ use super::treenode::*;
 ///
 /// Trait implemented by types that can work as a tree node index
 ///
-trait TreeNodeIndex {
+pub trait TreeNodeIndex {
     ///
     /// Finds the tree node corresponding to the specified index in the tree
     ///
@@ -30,5 +30,60 @@ impl TreeNodeIndex for usize {
                 }
             }
         }
+    }
+}
+
+///
+/// Provides the ability to reference the children of a tree node by looking up a particular index
+///
+pub trait TreeNodeLookup : TreeNode {
+    ///
+    /// Looks up a child node at a particular index (panics if the child does not exist)
+    ///
+    fn get_child_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> &TreeNode where TIndex: 'a;
+}
+
+impl<T: TreeNode> TreeNodeLookup for T {
+    ///
+    /// Looks up a child node at a particular index (panics if the child does not exist)
+    ///
+    fn get_child_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> &TreeNode where TIndex: 'a {
+        let opt_node = index.lookup_index(self);
+        let node_ref = opt_node.unwrap();
+
+        &**node_ref
+    }
+}
+
+/*
+impl<TIndex: TreeNodeIndex> Index<TIndex> for TreeNode {
+    type Output = TreeNode;
+
+    fn index<'a>(&'a self, index: TIndex) -> &'a TreeNode {
+        let opt_node = index.lookup_index(self);
+        let node_ref = opt_node.unwrap();
+
+        &**node_ref
+    }
+}
+*/
+
+#[cfg(test)]
+mod treenode_index_tests {
+    use super::super::values::*;
+    use super::super::treenode::*;
+    use super::super::basictree::*;
+    use std::rc::*;
+
+    #[test]
+    fn can_get_first_child() {
+        let mut tree = BasicTree::new("test", ());
+        let first_child = Rc::new(BasicTree::new("first_child", ()));
+
+        tree.set_child_ref(first_child);
+
+        assert!(tree.get_child_at(0).is_some());
+        assert!((tree.get_child_at(0).unwrap().get_tag()) == "child");
+        assert!(tree.get_sibling_ref().is_none());
     }
 }
