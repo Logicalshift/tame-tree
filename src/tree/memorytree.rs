@@ -82,29 +82,6 @@ impl MutableTreeNode for MemoryTree {
         self.value = new_value;
         self
     }
-
-    ///
-    /// Returns a reference to a mutable version of a particular child node
-    ///
-    fn alter_child(&mut self, at_index: u32) -> &mut MutableTreeNode {
-        // Try to get the child as a mutable reference
-        let array_index = at_index as usize;
-        let mutable_child = Rc::get_mut(self.child_nodes[array_index]);
-
-        // The child may be referenced in multiple places
-        match mutable_child {
-            // We'll get a mutable result if we're the sole owner
-            Some(child) => return child,
-
-            // None indicates that the child is shared, so we need to create a copy
-            None => {
-                // Generate a copy of this child
-                self.child_nodes[array_index] = MemoryTree::from(self.child_nodes[array_index]);
-
-                return Rc::get_mut(&mut self.child_nodes[array_index]).unwrap();
-            }
-        }
-    }
 }
 
 impl Clone for MemoryTree {

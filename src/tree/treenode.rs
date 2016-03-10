@@ -59,12 +59,7 @@ pub trait MutableTreeNode : TreeNode {
     /// Removes the child node at the specified index. Returns the same node so many nodes can be altered as part of a single statement
     ///
     fn remove_child(&mut self, index: u32) -> &mut MutableTreeNode;
-
-    ///
-    /// Returns a reference to a mutable version of a particular child node
-    ///
-    fn alter_child(&mut self, at_index: u32) -> &mut MutableTreeNode;
-
+    
     ///
     /// Changes the value set for this node. Returns the same node so many nodes can be altered as part of a single statement.
     ///
