@@ -1,5 +1,4 @@
 use std::rc::*;
-use std::ops::*;
 use super::treenode::*;
 
 ///
@@ -34,6 +33,30 @@ impl TreeNodeIndex for usize {
     }
 }
 
+impl<'b> TreeNodeIndex for &'b str {
+    ///
+    /// Finds the tree node corresponding to the specified index in the tree
+    ///
+    /// When searching by tag, we match only the first item that we find.
+    ///
+    fn lookup_index<'a>(&self, parent_node: &'a TreeNode) -> Option<&'a Rc<TreeNode>> {
+        let mut current_child = parent_node.get_child_ref().to_owned();
+
+        loop {
+            match current_child {
+                None        => return None,
+                Some(child) => {
+                    if (*child).get_tag() == *self {
+                        return current_child;
+                    }
+
+                    current_child = child.get_sibling_ref().to_owned();
+                }
+            }
+        }
+    }
+}
+
 ///
 /// Provides the ability to reference the children of a tree node by looking up a particular index
 ///
@@ -42,6 +65,11 @@ pub trait TreeNodeLookup : TreeNode {
     /// Looks up a child node at a particular index (panics if the child does not exist)
     ///
     fn get_child_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> &'a TreeNode;
+
+    ///
+    /// Looks up a child node at a particular index
+    ///
+    fn get_child_ref_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Option<&'a Rc<TreeNode>>;
 }
 
 impl<T: TreeNode> TreeNodeLookup for T {
@@ -54,17 +82,14 @@ impl<T: TreeNode> TreeNodeLookup for T {
 
         &**node_ref
     }
-}
 
-/*
-impl<'b, T: TreeNode, TIndex: TreeNodeIndex> Index<TIndex> for T {
-    type Output = TreeNode+'b;
-
-    fn index<'a>(&'a self, index: TIndex) -> &'a TreeNode {
-        self.get_child_at(index)
+    ///
+    /// Looks up a child node at a particular index
+    ///
+    fn get_child_ref_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Option<&'a Rc<TreeNode>> {
+        index.lookup_index(self)
     }
 }
-*/
 
 #[cfg(test)]
 mod treenode_index_tests {
@@ -96,16 +121,14 @@ mod treenode_index_tests {
         assert!(tree.get_sibling_ref().is_none());
     }
 
-    /*
     #[test]
-    fn can_get_first_child_via_index() {
+    fn can_get_first_child_by_string() {
         let mut tree = BasicTree::new("test", ());
         let first_child = Rc::new(BasicTree::new("first_child", ()));
 
         tree.set_child_ref(first_child);
 
-        assert!((tree[0].get_tag()) == "first_child");
+        assert!((tree.get_child_at("first_child").get_tag()) == "first_child");
         assert!(tree.get_sibling_ref().is_none());
     }
-    */
 }
