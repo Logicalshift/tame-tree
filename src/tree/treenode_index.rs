@@ -1,4 +1,5 @@
 use std::rc::*;
+use std::ops::*;
 use super::treenode::*;
 
 ///
@@ -56,14 +57,11 @@ impl<T: TreeNode> TreeNodeLookup for T {
 }
 
 /*
-impl<TIndex: TreeNodeIndex> Index<TIndex> for TreeNode {
-    type Output = TreeNode;
+impl<'b, T: TreeNode, TIndex: TreeNodeIndex> Index<TIndex> for T {
+    type Output = TreeNode+'b;
 
     fn index<'a>(&'a self, index: TIndex) -> &'a TreeNode {
-        let opt_node = index.lookup_index(self);
-        let node_ref = opt_node.unwrap();
-
-        &**node_ref
+        self.get_child_at(index)
     }
 }
 */
@@ -97,4 +95,17 @@ mod treenode_index_tests {
         assert!((tree.get_child_at(0).get_tag()) == "first_child");
         assert!(tree.get_sibling_ref().is_none());
     }
+
+    /*
+    #[test]
+    fn can_get_first_child_via_index() {
+        let mut tree = BasicTree::new("test", ());
+        let first_child = Rc::new(BasicTree::new("first_child", ()));
+
+        tree.set_child_ref(first_child);
+
+        assert!((tree[0].get_tag()) == "first_child");
+        assert!(tree.get_sibling_ref().is_none());
+    }
+    */
 }
