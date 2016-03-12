@@ -2,9 +2,10 @@ use super::treenode::*;
 use super::values::*;
 
 ///
-/// Trait that provides some sugar functions that makes MutableTreeNode easier to use
+/// Sugar functions for MutableTreeNode: various functions that can be implemented in terms of
+/// the standard mutable tree node functions.
 ///
-pub trait MutableTreeNodeSugar : MutableTreeNode {
+pub trait MutableTreeNodeSugar {
     ///
     /// Updates the child of this tree node
     ///
