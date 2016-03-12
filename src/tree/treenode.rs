@@ -92,7 +92,26 @@ impl<T> ToTreeNode for Rc<T> where T: TreeNode, T: 'static {
     }
 }
 
+impl ToTreeNode for Rc<TreeNode> {
+    ///
+    /// Converts this value into a tree node
+    ///
+    fn to_tree_node(&self) -> Rc<TreeNode> {
+        self.clone()
+    }
+}
+
 impl<'a, T> ToTreeNode for &'a Rc<T> where T: TreeNode, T: 'static {
+    ///
+    /// Converts this value into a tree node
+    ///
+    fn to_tree_node(&self) -> Rc<TreeNode> {
+        (*self).clone()
+    }
+}
+
+
+impl<'a> ToTreeNode for &'a Rc<TreeNode> {
     ///
     /// Converts this value into a tree node
     ///
