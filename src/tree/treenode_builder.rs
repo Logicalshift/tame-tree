@@ -45,9 +45,9 @@ mod treenode_builder_tests {
         root.set_children_refs(&child_list);
 
         assert!(root.get_child_ref().is_some());
-        assert!(root.get_child_ref().map(|x| x.get_tag() == "child1").unwrap_or(false));
-        assert!(root.get_child_ref().and_then(|x| x.get_sibling_ref()).map(|x| x.get_tag() == "child2").unwrap_or(false));
-        assert!(root.get_child_ref().and_then(|x| x.get_sibling_ref()).and_then(|x| x.get_sibling_ref()).map(|x| x.get_tag() == "child3").unwrap_or(false));
-        assert!(root.get_child_ref().and_then(|x| x.get_sibling_ref()).and_then(|x| x.get_sibling_ref()).and_then(|x| x.get_sibling_ref()).is_none());
+        assert!(root.get_child_ref_at(0).map(|x| x.get_tag() == "child1").unwrap_or(false));
+        assert!(root.get_child_ref_at(1).map(|x| x.get_tag() == "child2").unwrap_or(false));
+        assert!(root.get_child_ref_at(2).map(|x| x.get_tag() == "child3").unwrap_or(false));
+        assert!(root.get_child_ref_at(3).is_none());
     }
 }
