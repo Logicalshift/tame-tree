@@ -118,6 +118,16 @@ impl MutableTreeNode for BasicTree {
     }
 }
 
+impl Clone for BasicTree {
+    fn clone(&self) -> BasicTree {
+        BasicTree { 
+            tag:        self.tag.to_owned(), 
+            value:      self.value.to_owned(), 
+            child:      self.child.to_owned(),
+            sibling:    self.sibling.to_owned() }
+    }
+}
+
 impl<'a> ToTreeNode for &'a str {
     fn to_tree_node(&self) -> Rc<TreeNode> {
         Rc::new(BasicTree::new(self, ()))
