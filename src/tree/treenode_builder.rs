@@ -80,11 +80,11 @@ mod treenode_builder_tests {
     fn can_build_tree_macro() {
         let root = tree!("root", "child1", ("child2", "value"), tree!("child3", "grandchild1"));
 
-        assert!((*root).get_child_ref().is_some());
-        assert!((*root).get_child_ref_at(0).map(|x| x.get_tag() == "child1").unwrap_or(false));
-        assert!((*root).get_child_ref_at(1).map(|x| x.get_tag() == "child2").unwrap_or(false));
-        assert!((*root).get_child_ref_at(2).map(|x| x.get_tag() == "child3").unwrap_or(false));
-        assert!((*root).get_child_ref_at(2).and_then(|x| (**x).get_child_ref_at(0)).map(|x| x.get_tag() == "grandchild1").unwrap_or(false));
-        assert!((*root).get_child_ref_at(3).is_none());
+        assert!(root.get_child_ref().is_some());
+        assert!(root.get_child_ref_at(0).map(|x| x.get_tag() == "child1").unwrap_or(false));
+        assert!(root.get_child_ref_at(1).map(|x| x.get_tag() == "child2").unwrap_or(false));
+        assert!(root.get_child_ref_at(2).map(|x| x.get_tag() == "child3").unwrap_or(false));
+        assert!(root.get_child_ref_at(2).and_then(|x| x.get_child_ref_at(0)).map(|x| x.get_tag() == "grandchild1").unwrap_or(false));
+        assert!(root.get_child_ref_at(3).is_none());
     }
 }
