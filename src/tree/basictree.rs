@@ -20,6 +20,22 @@ impl BasicTree {
     pub fn new<TValue: ToTreeValue>(tag: &str, value: TValue) -> BasicTree {
         BasicTree { tag: tag.to_string(), value: value.to_tree_value(), child: None, sibling: None }
     }
+
+    ///
+    /// Copies a node into a new basic node
+    ///
+    pub fn from<'a, TNode: ToTreeNode>(node: &'a ToTreeNode) -> BasicTree {
+        let as_tree_node    = (*node).to_tree_node();
+        let child           = (*as_tree_node).get_child_ref().map(|n| (*n).to_owned());
+        let sibling         = (*as_tree_node).get_sibling_ref().map(|n| (*n).to_owned());
+
+        BasicTree { 
+            tag:        (*as_tree_node).get_tag().to_owned(), 
+            value:      (*as_tree_node).get_value().to_owned(), 
+            child:      child,
+            sibling:    sibling
+        }
+    }
 }
 
 impl TreeNode for BasicTree {
@@ -102,6 +118,19 @@ impl MutableTreeNode for BasicTree {
     }
 }
 
+impl<'a> ToTreeNode for &'a str {
+    fn to_tree_node(&self) -> Rc<TreeNode> {
+        Rc::new(BasicTree::new(self, ()))
+    }
+}
+
+impl<'a, TValue: ToTreeValue> ToTreeNode for (&'a str, TValue) {
+    fn to_tree_node(&self) -> Rc<TreeNode> {
+        let (ref tag, ref value) = *self;
+        Rc::new(BasicTree::new(tag, value.to_tree_value()))
+    }
+}
+
 #[cfg(test)]
 mod basictree_tests {
     use super::*;
@@ -130,9 +159,8 @@ mod basictree_tests {
     #[test]
     fn can_set_child() {
         let mut tree = BasicTree::new("test", ());
-        let child = Rc::new(BasicTree::new("child", ()));
 
-        tree.set_child_ref(child);
+        tree.set_child(("child", "childvalue"));
 
         assert!(tree.get_child_ref().is_some());
         assert!((tree.get_child_ref().unwrap().get_tag()) == "child");
