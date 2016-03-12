@@ -32,6 +32,28 @@ impl<T: MutableTreeNode> TreeNodeBuilder for T {
     }
 }
 
+///
+/// Macro that will create a tree from a set of expressions that support the ToTreeNode trait
+///
+/// The first parameter is the root item, followed by the child items
+///
+macro_rules! tree {
+    ( $root: expr, $( $child: expr ), * ) => {
+        {
+            let mut root        = BasicTree::from($root);
+            let mut child_list  = Vec::new();
+
+            $(
+                child_list.push($child.to_tree_node());
+            )*
+
+            root.set_children_refs(&child_list);
+
+            root
+        }
+    }
+}
+
 #[cfg(test)]
 mod treenode_builder_tests {
     use super::super::treenode::*;
@@ -49,5 +71,17 @@ mod treenode_builder_tests {
         assert!(root.get_child_ref_at(1).map(|x| x.get_tag() == "child2").unwrap_or(false));
         assert!(root.get_child_ref_at(2).map(|x| x.get_tag() == "child3").unwrap_or(false));
         assert!(root.get_child_ref_at(3).is_none());
+    }
+
+    #[test]
+    fn can_build_tree_macro() {
+        let root = tree!("root", "child1", ("child2", "value"), tree!("child3", "grandchild1")).to_tree_node();
+
+        assert!((*root).get_child_ref().is_some());
+        assert!((*root).get_child_ref_at(0).map(|x| x.get_tag() == "child1").unwrap_or(false));
+        assert!((*root).get_child_ref_at(1).map(|x| x.get_tag() == "child2").unwrap_or(false));
+        assert!((*root).get_child_ref_at(2).map(|x| x.get_tag() == "child3").unwrap_or(false));
+        assert!((*root).get_child_ref_at(2).and_then(|x| (**x).get_child_ref_at(0)).map(|x| x.get_tag() == "grandchild1").unwrap_or(false));
+        assert!((*root).get_child_ref_at(3).is_none());
     }
 }
