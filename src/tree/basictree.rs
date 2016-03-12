@@ -24,8 +24,8 @@ impl BasicTree {
     ///
     /// Copies a node into a new basic node
     ///
-    pub fn from<'a, TNode: ToTreeNode>(node: &'a ToTreeNode) -> BasicTree {
-        let as_tree_node    = (*node).to_tree_node();
+    pub fn from<TNode: ToTreeNode>(node: TNode) -> BasicTree {
+        let as_tree_node    = node.to_tree_node();
         let child           = (*as_tree_node).get_child_ref().map(|n| (*n).to_owned());
         let sibling         = (*as_tree_node).get_sibling_ref().map(|n| (*n).to_owned());
 
@@ -197,5 +197,13 @@ mod basictree_tests {
         tree.set_tree_value(TreeValue::String("Some value".to_string()));
 
         assert!(match *tree.get_value() { TreeValue::String(ref x) => x == "Some value", _ => false });
+    }
+
+    #[test]
+    fn can_clone_from() {
+        let tree = "tree".to_tree_node();
+        let copy = BasicTree::from(tree);
+
+        assert!(copy.get_tag() == "tree");
     }
 }
