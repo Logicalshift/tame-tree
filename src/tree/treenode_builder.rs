@@ -40,6 +40,8 @@ impl<T: MutableTreeNode> TreeNodeBuilder for T {
 macro_rules! tree {
     ( $root: expr, $( $child: expr ), * ) => {
         {
+            use std::rc::*;
+
             let mut root        = BasicTree::from($root);
             let mut child_list  = Vec::new();
 
@@ -49,7 +51,8 @@ macro_rules! tree {
 
             root.set_children_refs(&child_list);
 
-            root
+            let result: Rc<TreeNode> = Rc::new(root);
+            result
         }
     }
 }
@@ -75,7 +78,7 @@ mod treenode_builder_tests {
 
     #[test]
     fn can_build_tree_macro() {
-        let root = tree!("root", "child1", ("child2", "value"), tree!("child3", "grandchild1")).to_tree_node();
+        let root = tree!("root", "child1", ("child2", "value"), tree!("child3", "grandchild1"));
 
         assert!((*root).get_child_ref().is_some());
         assert!((*root).get_child_ref_at(0).map(|x| x.get_tag() == "child1").unwrap_or(false));
