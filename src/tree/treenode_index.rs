@@ -60,7 +60,7 @@ impl<'b> TreeNodeIndex for &'b str {
 ///
 /// Provides the ability to reference the children of a tree node by looking up a particular index
 ///
-pub trait TreeNodeLookup : TreeNode {
+pub trait TreeNodeLookup {
     ///
     /// Looks up a child node at a particular index (panics if the child does not exist)
     ///
@@ -73,6 +73,27 @@ pub trait TreeNodeLookup : TreeNode {
 }
 
 impl<T: TreeNode> TreeNodeLookup for T {
+    ///
+    /// Looks up a child node at a particular index (panics if the child does not exist)
+    ///
+    fn get_child_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> &'a TreeNode {
+        let opt_node = index.lookup_index(self);
+        let node_ref = opt_node.unwrap();
+
+        &**node_ref
+    }
+
+    ///
+    /// Looks up a child node at a particular index
+    ///
+    fn get_child_ref_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Option<&'a Rc<TreeNode>> {
+        index.lookup_index(self)
+    }
+}
+
+
+// Annoying that the above definition doesn't cover the 'raw treenode' case
+impl TreeNodeLookup for TreeNode {
     ///
     /// Looks up a child node at a particular index (panics if the child does not exist)
     ///
