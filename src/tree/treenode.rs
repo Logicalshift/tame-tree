@@ -3,6 +3,7 @@ use std::rc::*;
 
 pub use super::treenode_sugar::*;
 pub use super::treenode_index::*;
+pub use super::treenode_builder::*;
 
 ///
 /// The treenode trait is implemented by types that can act as part of a tree
