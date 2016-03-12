@@ -49,8 +49,8 @@ impl ToTreeValue for f64 {
     fn to_tree_value(&self) -> TreeValue { TreeValue::Real(*self) }
 }
 
-impl ToTreeValue for str {
-    fn to_tree_value(&self) -> TreeValue { TreeValue::String(self.to_owned()) }
+impl<'a> ToTreeValue for &'a str {
+    fn to_tree_value(&self) -> TreeValue { TreeValue::String(self.to_string()) }
 }
 
 impl ToTreeValue for String {
