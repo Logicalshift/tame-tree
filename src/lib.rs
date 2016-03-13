@@ -30,5 +30,7 @@
 //!
 //! Where UNIX uses streams for communication, TreeSync instead uses trees to better support interactive applications.
 
+extern crate rustc_serialize;
+
 pub mod tree;
 pub mod component;
