@@ -17,6 +17,7 @@ pub enum TreeNodeDecodingError {
     UnsupportedType,
     NodeHasInvalidType,
     ValueOutOfRange,
+    MissingField,
     GenericError(String)
 }
 
@@ -85,6 +86,33 @@ impl Decoder for TreeNodeDecoder {
         }
     }
 
+    fn read_struct<T, F>(&mut self, s_name: &str, len: usize, f: F) -> Result<T, Self::Error> where F: FnOnce(&mut Self) -> Result<T, Self::Error> {
+        f(self)
+    }
+
+    fn read_struct_field<T, F>(&mut self, f_name: &str, f_idx: usize, f: F) -> Result<T, Self::Error> where F: FnOnce(&mut Self) -> Result<T, Self::Error> {
+        // Look up the field
+        // TODO: could hash the field names to avoid doing a linear search every time (not clear if there are substantial benefits for this given the small number of fields in most structures)
+        let field = self.current_node.get_child_ref_at(f_name);
+
+        match field {
+            None        => Err(TreeNodeDecodingError::MissingField),
+            Some(ref x) => {
+                // Move into the field node
+                let previous_node = self.current_node.to_owned();
+                self.current_node = x.to_owned();
+
+                // Decode it
+                let result = f(self);
+
+                // Move back out
+                self.current_node = previous_node.to_owned();
+
+                result
+            }
+        }
+    }
+
     fn read_usize(&mut self) -> Result<usize, Self::Error> {
         Err(TreeNodeDecodingError::UnsupportedType)
     }
@@ -134,14 +162,6 @@ impl Decoder for TreeNodeDecoder {
     }
 
     fn read_enum_struct_variant_field<T, F>(&mut self, f_name: &str, f_idx: usize, f: F) -> Result<T, Self::Error> where F: FnOnce(&mut Self) -> Result<T, Self::Error> {
-        Err(TreeNodeDecodingError::UnsupportedType)
-    }
-
-    fn read_struct<T, F>(&mut self, s_name: &str, len: usize, f: F) -> Result<T, Self::Error> where F: FnOnce(&mut Self) -> Result<T, Self::Error> {
-        Err(TreeNodeDecodingError::UnsupportedType)
-    }
-
-    fn read_struct_field<T, F>(&mut self, f_name: &str, f_idx: usize, f: F) -> Result<T, Self::Error> where F: FnOnce(&mut Self) -> Result<T, Self::Error> {
         Err(TreeNodeDecodingError::UnsupportedType)
     }
 
