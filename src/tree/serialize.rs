@@ -66,6 +66,21 @@ impl<'a> Encoder for TreeNodeEncoder<'a> {
         Ok(())
     }
 
+    fn emit_struct<F>(&mut self, name: &str, len: usize, f: F) -> Result<(), Self::Error> where F: FnOnce(&mut Self) -> Result<(), Self::Error> {
+        Err(TreeNodeCodingError::UnsupportedType)
+    }
+
+    fn emit_struct_field<F>(&mut self, f_name: &str, f_idx: usize, f: F) -> Result<(), Self::Error> where F: FnOnce(&mut Self) -> Result<(), Self::Error> {
+        // Hrm, so what I want to do is create a new encoder with a new node and call f on it.
+        // But rust has other ideas; it doesn't know that f(X) doesn't reference X after it returns, so it moans
+        // Other ideas
+        //   * create a whole new encoder (can't do it, we don't have any access to the struct)
+        //   * swap the reference to the node (can't do it, the new node has the same lifetime problems)
+        //   * use a CloneCell (can't do it, set_tree_value and set_tag aren't supported)
+
+        Err(TreeNodeCodingError::UnsupportedType)
+    }
+
     fn emit_usize(&mut self, v: usize) -> Result<(), Self::Error> {
         Err(TreeNodeCodingError::UnsupportedType)
     }
@@ -115,14 +130,6 @@ impl<'a> Encoder for TreeNodeEncoder<'a> {
     }
 
     fn emit_enum_struct_variant_field<F>(&mut self, f_name: &str, f_idx: usize, f: F) -> Result<(), Self::Error> where F: FnOnce(&mut Self) -> Result<(), Self::Error> {
-        Err(TreeNodeCodingError::UnsupportedType)
-    }
-
-    fn emit_struct<F>(&mut self, name: &str, len: usize, f: F) -> Result<(), Self::Error> where F: FnOnce(&mut Self) -> Result<(), Self::Error> {
-        Err(TreeNodeCodingError::UnsupportedType)
-    }
-
-    fn emit_struct_field<F>(&mut self, f_name: &str, f_idx: usize, f: F) -> Result<(), Self::Error> where F: FnOnce(&mut Self) -> Result<(), Self::Error> {
         Err(TreeNodeCodingError::UnsupportedType)
     }
 
