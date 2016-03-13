@@ -101,20 +101,29 @@ mod clonecell_tests {
     #[test]
     fn clonecell_update_rc() {
         let ref_count = Rc::new(Cell::new(RefCount::new()));
-        let rc_standin = Droppable::new(&ref_count);
-
-        assert!(ref_count.get().get() == 1);
-
-        let arefcell = CloneCell::new(rc_standin.clone());
-        assert!(ref_count.get().get() == 2);
-
         let ref_count2 = Rc::new(Cell::new(RefCount::new()));
-        let rc_standin2 = Droppable::new(&ref_count2);
 
-        assert!(ref_count2.get().get() == 1);
+        assert!(ref_count.get().get() == 0);
+        assert!(ref_count2.get().get() == 0);
 
-        arefcell.set(rc_standin2.clone());
-        assert!(ref_count2.get().get() == 2);
-        assert!(ref_count.get().get() == 1);
+        {
+            let rc_standin = Droppable::new(&ref_count);
+
+            assert!(ref_count.get().get() == 1);
+
+            let arefcell = CloneCell::new(rc_standin.clone());
+            assert!(ref_count.get().get() == 2);
+
+            let rc_standin2 = Droppable::new(&ref_count2);
+
+            assert!(ref_count2.get().get() == 1);
+
+            arefcell.set(rc_standin2.clone());
+            assert!(ref_count2.get().get() == 2);
+            assert!(ref_count.get().get() == 1);
+        }
+
+        assert!(ref_count.get().get() == 0);
+        assert!(ref_count2.get().get() == 0);
     }
 }
