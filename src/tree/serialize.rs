@@ -92,11 +92,11 @@ impl Encoder for TreeNodeEncoder {
     fn emit_struct_field<F>(&mut self, f_name: &str, f_idx: usize, f: F) -> Result<(), Self::Error> where F: FnOnce(&mut Self) -> Result<(), Self::Error> {
         // Encode the function into a new encoder
         let mut node_encoder = TreeNodeEncoder::new();
-        let encoding_error = f(&mut node_encoder);
+        let encoding_result = f(&mut node_encoder);
 
         // Short-circuit on error
-        if encoding_error.is_err() {
-            return encoding_error;
+        if encoding_result.is_err() {
+            return encoding_result;
         }
 
         // Replace the child node with the node generated for the new encoder
