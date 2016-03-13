@@ -1,7 +1,7 @@
 use std::rc::*;
 
 use super::treenode::*;
-use super::tree_ref::*;
+use super::basictree::*;
 
 pub trait TreeNodeBuilder {
     ///
@@ -17,11 +17,15 @@ impl<T: MutableTreeNode> TreeNodeBuilder for T {
         let num_new_children = new_children.len();
 
         if num_new_children > 0 {
-            // Build the final child node backwards
-            let mut new_child = new_children[num_new_children-1].with_no_sibling();
+            // Build the list of child nodes backwards
+            let mut new_child = Rc::new(BasicTree::from(&new_children[num_new_children-1]));
+            new_child.clear_sibling();
 
             for child_num in (0..(num_new_children-1)).rev() {
-                new_child = new_children[child_num].with_sibling_ref(&new_child);
+                let previous_child = Rc::new(BasicTree::from(&new_children[child_num]));
+                previous_child.set_sibling_ref(new_child);
+
+                new_child = previous_child;
             }
 
             self.set_child(new_child);
