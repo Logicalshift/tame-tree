@@ -41,6 +41,7 @@ mod clonecell_tests {
     // However, that feature is considered 'not clearly useful' so we have to reimplement everything to make sure that reference counts
     // get updated properly. 
 
+    #[derive(Copy, Clone)]
     struct RefCount {
         count: i32
     }
@@ -67,15 +68,6 @@ mod clonecell_tests {
 
     struct Droppable {
         counter: RefCountRef
-    }
-
-    impl Copy for RefCount {
-    }
-
-    impl Clone for RefCount {
-        fn clone(&self) -> RefCount {
-            RefCount { count: self.count }
-        }
     }
 
     impl Drop for Droppable {

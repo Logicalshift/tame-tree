@@ -36,6 +36,7 @@ impl TreeNodeEncoder {
     }
 }
 
+#[derive(Debug)]
 pub enum TreeNodeCodingError {
     UnsupportedType
 }
@@ -217,7 +218,7 @@ impl Encoder for TreeNodeEncoder {
 ///
 /// Converts an encodable object into a treenode
 ///
-pub fn encode<T: Encodable>(source: &T) -> Rc<TreeNode> {
+pub fn encode<T: Encodable>(source: &T) -> Result<Rc<TreeNode>, TreeNodeCodingError> {
     // The encoder doesn't directly create a TreeNode because of the way rust lifetimes work
     // (We'd need a <'a> lifetime on the encoder, and that lifetime would prevent recursion by generating
     // new encoders. This is really a limitation of Rust; we work around it by generating the description of
@@ -225,9 +226,12 @@ pub fn encode<T: Encodable>(source: &T) -> Rc<TreeNode> {
     //
     // We don't expose the actual encoder publically for this reason, the API is too dumb by necessity.
     let mut encoder = TreeNodeEncoder::new();
-    source.encode(&mut encoder);
+    let result = source.encode(&mut encoder);
 
-    Rc::new(encoder.to_basic_tree_node())
+    result.map(|_| {
+        let result: Rc<TreeNode> = Rc::new(encoder.to_basic_tree_node());
+        result
+    })
 }
 
 ///
@@ -242,6 +246,6 @@ impl<T: Encodable + EncodeToTreeNode> ToTreeNode for T {
     /// Converts this value into a tree node
     ///
     fn to_tree_node(&self) -> Rc<TreeNode> {
-        encode(self)
+        encode(self).unwrap()
     }
 }
