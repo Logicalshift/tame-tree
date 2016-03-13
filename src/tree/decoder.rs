@@ -2,6 +2,7 @@ use std::rc::*;
 
 use rustc_serialize::*;
 
+use super::encoder::*;
 use super::treenode::*;
 use super::values::*;
 
@@ -207,5 +208,26 @@ impl Decoder for TreeNodeDecoder {
 
     fn error(&mut self, err: &str) -> Self::Error {
         TreeNodeDecodingError::GenericError(err.to_string())
+    }
+}
+
+///
+/// Trait implemented by things that can be decoded from a tree node
+///
+pub trait DecodeFromTreeNode : Sized {
+    ///
+    /// Creates a new object from a tree node
+    ///
+    fn new_from_tree(tree: &Rc<TreeNode>) -> Result<Self, TreeNodeDecodingError>;
+}
+
+impl<T: Decodable + EncodeToTreeNode> DecodeFromTreeNode for T {
+    ///
+    /// Creates a new object from a tree node
+    ///
+    fn new_from_tree(tree: &Rc<TreeNode>) -> Result<T, TreeNodeDecodingError> {
+        let mut decoder = TreeNodeDecoder { current_node: tree.to_owned() };
+
+        T::decode(&mut decoder)
     }
 }
