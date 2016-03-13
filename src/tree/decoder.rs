@@ -231,3 +231,33 @@ impl<T: Decodable + EncodeToTreeNode> DecodeFromTreeNode for T {
         T::decode(&mut decoder)
     }
 }
+
+#[cfg(test)]
+mod decoder_tests {
+    use super::super::super::tree::*;
+
+    #[derive(RustcEncodable, RustcDecodable)]
+    struct Test {
+        field1: i32,
+        field2: String,
+        field3: bool
+    }
+
+    impl EncodeToTreeNode for Test { }
+
+    #[test]
+    fn encode_decode_structure() {
+        let initial_structure = Test { field1: 42, field2: "test string".to_string(), field3: true };
+
+        let encoded = initial_structure.to_tree_node();
+        let decoded = Test::new_from_tree(&encoded);
+
+        assert!(decoded.is_ok());
+
+        let result = decoded.unwrap();
+
+        assert!(result.field1 == 42);
+        assert!(result.field2 == "test string");
+        assert!(result.field3);
+    }
+}
