@@ -3,6 +3,7 @@
 ///
 pub enum TreeValue {
     Nothing,
+    Bool(bool),
     Int(i32),
     Real(f64),
     String(String),
@@ -41,6 +42,10 @@ impl ToTreeValue for () {
     fn to_tree_value(&self) -> TreeValue { TreeValue::Nothing }
 }
 
+impl ToTreeValue for bool {
+    fn to_tree_value(&self) -> TreeValue { TreeValue::Bool(*self) }
+}
+
 impl ToTreeValue for i32 {
     fn to_tree_value(&self) -> TreeValue { TreeValue::Int(*self) }
 }
@@ -65,6 +70,7 @@ impl Clone for TreeValue {
     fn clone(&self) -> TreeValue {
         match *self {
             TreeValue::Nothing          => TreeValue::Nothing,
+            TreeValue::Bool(b)          => TreeValue::Bool(b),
             TreeValue::Int(v)           => TreeValue::Int(v),
             TreeValue::Real(f)          => TreeValue::Real(f),
             TreeValue::String(ref s)    => TreeValue::String(s.to_string()),

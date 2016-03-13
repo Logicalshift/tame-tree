@@ -31,6 +31,41 @@ impl<'a> Encoder for TreeNodeEncoder<'a> {
         Ok(())
     }
 
+    fn emit_i32(&mut self, v: i32) -> Result<(), Self::Error> {
+        self.root.set_tree_value(TreeValue::Int(v));
+        Ok(())
+    }
+
+    fn emit_i16(&mut self, v: i16) -> Result<(), Self::Error> {
+        self.root.set_tree_value(TreeValue::Int(v as i32));
+        Ok(())
+    }
+
+    fn emit_i8(&mut self, v: i8) -> Result<(), Self::Error> {
+        self.root.set_tree_value(TreeValue::Int(v as i32));
+        Ok(())
+    }
+
+    fn emit_bool(&mut self, v: bool) -> Result<(), Self::Error> {
+        self.root.set_tree_value(TreeValue::Bool(v));
+        Ok(())
+    }
+
+    fn emit_f64(&mut self, v: f64) -> Result<(), Self::Error> {
+        self.root.set_tree_value(TreeValue::Real(v));
+        Ok(())
+    }
+
+    fn emit_f32(&mut self, v: f32) -> Result<(), Self::Error> {
+        self.root.set_tree_value(TreeValue::Real(v as f64));
+        Ok(())
+    }
+
+    fn emit_str(&mut self, v: &str) -> Result<(), Self::Error> {
+        self.root.set_tree_value(TreeValue::String(v.to_string()));
+        Ok(())
+    }
+
     fn emit_usize(&mut self, v: usize) -> Result<(), Self::Error> {
         Err(TreeNodeCodingError::UnsupportedType)
     }
@@ -59,35 +94,7 @@ impl<'a> Encoder for TreeNodeEncoder<'a> {
         Err(TreeNodeCodingError::UnsupportedType)
     }
 
-    fn emit_i32(&mut self, v: i32) -> Result<(), Self::Error> {
-        Err(TreeNodeCodingError::UnsupportedType)
-    }
-
-    fn emit_i16(&mut self, v: i16) -> Result<(), Self::Error> {
-        Err(TreeNodeCodingError::UnsupportedType)
-    }
-
-    fn emit_i8(&mut self, v: i8) -> Result<(), Self::Error> {
-        Err(TreeNodeCodingError::UnsupportedType)
-    }
-
-    fn emit_bool(&mut self, v: bool) -> Result<(), Self::Error> {
-        Err(TreeNodeCodingError::UnsupportedType)
-    }
-
-    fn emit_f64(&mut self, v: f64) -> Result<(), Self::Error> {
-        Err(TreeNodeCodingError::UnsupportedType)
-    }
-
-    fn emit_f32(&mut self, v: f32) -> Result<(), Self::Error> {
-        Err(TreeNodeCodingError::UnsupportedType)
-    }
-
     fn emit_char(&mut self, v: char) -> Result<(), Self::Error> {
-        Err(TreeNodeCodingError::UnsupportedType)
-    }
-
-    fn emit_str(&mut self, v: &str) -> Result<(), Self::Error> {
         Err(TreeNodeCodingError::UnsupportedType)
     }
 
