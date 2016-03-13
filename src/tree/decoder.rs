@@ -3,25 +3,86 @@ use std::rc::*;
 use rustc_serialize::*;
 
 use super::treenode::*;
+use super::values::*;
 
 ///
 /// Used to help decode tree nodes into other types
 ///
 struct TreeNodeDecoder {
-    currentNode: Rc<TreeNode>
+    current_node: Rc<TreeNode>
 }
 
 #[derive(Debug)]
 pub enum TreeNodeDecodingError {
     UnsupportedType,
+    NodeHasInvalidType,
+    ValueOutOfRange,
     GenericError(String)
+}
+
+impl TreeNodeDecoder {
+    fn read_current(&self) -> &TreeValue {
+        self.current_node.get_value()
+    }
 }
 
 impl Decoder for TreeNodeDecoder {
     type Error = TreeNodeDecodingError;
 
     fn read_nil(&mut self) -> Result<(), Self::Error> {
-        Err(TreeNodeDecodingError::UnsupportedType)
+        match *self.read_current() {
+            TreeValue::Nothing  => Ok(()),
+            _                   => Err(TreeNodeDecodingError::NodeHasInvalidType)
+        }
+    }
+
+    fn read_i32(&mut self) -> Result<i32, Self::Error> {
+        match *self.read_current() {
+            TreeValue::Int(ref x)   => Ok(*x),
+            _                       => Err(TreeNodeDecodingError::NodeHasInvalidType)
+        }
+    }
+
+    fn read_i16(&mut self) -> Result<i16, Self::Error> {
+        match *self.read_current() {
+            TreeValue::Int(ref x)   => if (*x >= i16::min_value() as i32) && (*x <= i16::max_value() as i32) { Ok(*x as i16) } else { Err(TreeNodeDecodingError::ValueOutOfRange) },
+            _                       => Err(TreeNodeDecodingError::NodeHasInvalidType)
+        }
+    }
+
+    fn read_i8(&mut self) -> Result<i8, Self::Error> {
+        match *self.read_current() {
+            TreeValue::Int(ref x)   => if (*x >= i8::min_value() as i32) && (*x <= i8::max_value() as i32) { Ok(*x as i8) } else { Err(TreeNodeDecodingError::ValueOutOfRange) },
+            _                       => Err(TreeNodeDecodingError::NodeHasInvalidType)
+        }
+    }
+
+    fn read_str(&mut self) -> Result<String, Self::Error> {
+        match *self.read_current() {
+            TreeValue::String(ref x)    => Ok(x.to_owned()),
+            _                           => Err(TreeNodeDecodingError::NodeHasInvalidType)
+        }
+    }
+
+    fn read_bool(&mut self) -> Result<bool, Self::Error> {
+        match *self.read_current() {
+            TreeValue::Bool(ref x)  => Ok(*x),
+            _                       => Err(TreeNodeDecodingError::NodeHasInvalidType)
+        }
+    }
+
+    fn read_f64(&mut self) -> Result<f64, Self::Error> {
+        match *self.read_current() {
+            TreeValue::Real(ref x)  => Ok(*x),
+            _                       => Err(TreeNodeDecodingError::NodeHasInvalidType)
+        }
+    }
+
+    fn read_f32(&mut self) -> Result<f32, Self::Error> {
+        match *self.read_current() {
+            TreeValue::Real(ref x)  => Ok(*x as f32),
+            _                       => Err(TreeNodeDecodingError::NodeHasInvalidType)
+        }
     }
 
     fn read_usize(&mut self) -> Result<usize, Self::Error> {
@@ -52,35 +113,7 @@ impl Decoder for TreeNodeDecoder {
         Err(TreeNodeDecodingError::UnsupportedType)
     }
 
-    fn read_i32(&mut self) -> Result<i32, Self::Error> {
-        Err(TreeNodeDecodingError::UnsupportedType)
-    }
-
-    fn read_i16(&mut self) -> Result<i16, Self::Error> {
-        Err(TreeNodeDecodingError::UnsupportedType)
-    }
-
-    fn read_i8(&mut self) -> Result<i8, Self::Error> {
-        Err(TreeNodeDecodingError::UnsupportedType)
-    }
-
-    fn read_bool(&mut self) -> Result<bool, Self::Error> {
-        Err(TreeNodeDecodingError::UnsupportedType)
-    }
-
-    fn read_f64(&mut self) -> Result<f64, Self::Error> {
-        Err(TreeNodeDecodingError::UnsupportedType)
-    }
-
-    fn read_f32(&mut self) -> Result<f32, Self::Error> {
-        Err(TreeNodeDecodingError::UnsupportedType)
-    }
-
     fn read_char(&mut self) -> Result<char, Self::Error> {
-        Err(TreeNodeDecodingError::UnsupportedType)
-    }
-
-    fn read_str(&mut self) -> Result<String, Self::Error> {
         Err(TreeNodeDecodingError::UnsupportedType)
     }
 

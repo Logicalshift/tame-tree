@@ -20,8 +20,8 @@ pub trait ToTreeValue {
 impl TreeValue {
     pub fn is_nothing(&self) -> bool {
         match *self {
-            TreeValue::Nothing => true,
-            _ => false
+            TreeValue::Nothing  => true,
+            _                   => false
         }
     }
 }
