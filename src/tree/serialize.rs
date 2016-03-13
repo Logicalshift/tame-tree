@@ -1,4 +1,5 @@
 use std::result::*;
+use std::rc::*;
 
 use rustc_serialize::*;
 
@@ -67,7 +68,9 @@ impl<'a> Encoder for TreeNodeEncoder<'a> {
     }
 
     fn emit_struct<F>(&mut self, name: &str, len: usize, f: F) -> Result<(), Self::Error> where F: FnOnce(&mut Self) -> Result<(), Self::Error> {
-        Err(TreeNodeCodingError::UnsupportedType)
+        self.root.set_tree_value(TreeValue::String(name.to_string()));
+
+        f(self)
     }
 
     fn emit_struct_field<F>(&mut self, f_name: &str, f_idx: usize, f: F) -> Result<(), Self::Error> where F: FnOnce(&mut Self) -> Result<(), Self::Error> {
@@ -77,6 +80,28 @@ impl<'a> Encoder for TreeNodeEncoder<'a> {
         //   * create a whole new encoder (can't do it, we don't have any access to the struct)
         //   * swap the reference to the node (can't do it, the new node has the same lifetime problems)
         //   * use a CloneCell (can't do it, set_tree_value and set_tag aren't supported)
+
+        // Insert a new node into the tree
+        let new_node = BasicTree::new(f_name, ());
+
+        self.root.get_child_ref().and_then(|sibling| {
+            new_node.set_sibling_ref(sibling);
+            Some(())
+        });
+
+        // Encode the field into the new node (would be super-elegant if this works but Rust is all 'nooope, you need to write a 
+        // billion more lines of code'). I know *why* but this is stupid, if the encoder function had a better lifetime specifier
+        // it'd be unnecessary.
+        // Rust thinks that f() needs stuff with a lifetime the same as this struct rather than stuff with a lifetime as long
+        // as the function call (it's not obvious from a casual reading of the definition, rust likes to be inscrutable). 
+        // This means we need to do dumb stuff to make it work.
+        /*
+        let node_encoder = TreeNodeEncoder::new(&mut new_node);
+        f(&mut node_encoder);
+        */
+
+        // Save the node we just created and update the tree
+        self.root.set_child_ref(Rc::new(new_node));
 
         Err(TreeNodeCodingError::UnsupportedType)
     }
