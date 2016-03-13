@@ -26,12 +26,12 @@ impl BasicTree {
     ///
     pub fn from<TNode: ToTreeNode>(node: TNode) -> BasicTree {
         let as_tree_node    = node.to_tree_node();
-        let child           = (*as_tree_node).get_child_ref().map(|n| (*n).to_owned());
-        let sibling         = (*as_tree_node).get_sibling_ref().map(|n| (*n).to_owned());
+        let child           = as_tree_node.get_child_ref();
+        let sibling         = as_tree_node.get_sibling_ref();
 
         BasicTree { 
-            tag:        (*as_tree_node).get_tag().to_owned(), 
-            value:      (*as_tree_node).get_value().to_owned(), 
+            tag:        as_tree_node.get_tag().to_owned(), 
+            value:      as_tree_node.get_value().to_owned(), 
             child:      child,
             sibling:    sibling
         }
@@ -42,9 +42,9 @@ impl TreeNode for BasicTree {
     ///
     /// Retrieves a reference to the child of this tree node (or None if this node has no child)
     ///
-    fn get_child_ref(&self) -> Option<&Rc<TreeNode>> {
+    fn get_child_ref(&self) -> Option<Rc<TreeNode>> {
         match self.child {
-            Some(ref child) => Some(child),
+            Some(ref child) => Some(child.to_owned()),
             None => None
         }
     }
@@ -52,9 +52,9 @@ impl TreeNode for BasicTree {
     ///
     /// Retrieves a reference to the sibling of this tree node (or None if this node has no sibling)
     ///
-    fn get_sibling_ref(&self) -> Option<&Rc<TreeNode>> {
+    fn get_sibling_ref(&self) -> Option<Rc<TreeNode>> {
         match self.sibling {
-            Some(ref sibling) => Some(sibling),
+            Some(ref sibling) => Some(sibling.to_owned()),
             None => None
         }
     }

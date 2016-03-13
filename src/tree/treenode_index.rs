@@ -8,22 +8,24 @@ pub trait TreeNodeIndex {
     ///
     /// Finds the tree node corresponding to the specified index in the tree
     ///
-    fn lookup_index<'a>(&self, parent_node: &'a TreeNode) -> Option<&'a Rc<TreeNode>>;
+    fn lookup_index<'a>(&self, parent_node: &'a TreeNode) -> Option<Rc<TreeNode>>;
 }
 
 impl TreeNodeIndex for usize {
     ///
     /// Finds the tree node corresponding to the specified index in the tree
     ///
-    fn lookup_index<'a>(&self, parent_node: &'a TreeNode) -> Option<&'a Rc<TreeNode>> {
+    fn lookup_index<'a>(&self, parent_node: &'a TreeNode) -> Option<Rc<TreeNode>> {
         let mut pos = *self;
-        let mut current_child = parent_node.get_child_ref().to_owned();
+        let mut current_child = parent_node.get_child_ref();
 
         loop {
             match current_child {
                 None        => return None,
                 Some(child) => {
-                    if pos == 0 { return current_child; }
+                    if pos == 0 { 
+                        return Some(child); 
+                    }
 
                     pos = pos-1;
                     current_child = child.get_sibling_ref().to_owned();
@@ -39,15 +41,15 @@ impl<'b> TreeNodeIndex for &'b str {
     ///
     /// When searching by tag, we match only the first item that we find.
     ///
-    fn lookup_index<'a>(&self, parent_node: &'a TreeNode) -> Option<&'a Rc<TreeNode>> {
+    fn lookup_index<'a>(&self, parent_node: &'a TreeNode) -> Option<Rc<TreeNode>> {
         let mut current_child = parent_node.get_child_ref().to_owned();
 
         loop {
             match current_child {
                 None        => return None,
                 Some(child) => {
-                    if (*child).get_tag() == *self {
-                        return current_child;
+                    if child.get_tag() == *self {
+                        return Some(child);
                     }
 
                     current_child = child.get_sibling_ref().to_owned();
@@ -64,29 +66,29 @@ pub trait TreeNodeLookup {
     ///
     /// Looks up a child node at a particular index (panics if the child does not exist)
     ///
-    fn get_child_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> &'a TreeNode;
+    fn get_child_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Rc<TreeNode>;
 
     ///
     /// Looks up a child node at a particular index
     ///
-    fn get_child_ref_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Option<&'a Rc<TreeNode>>;
+    fn get_child_ref_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Option<Rc<TreeNode>>;
 }
 
 impl<T: TreeNode> TreeNodeLookup for T {
     ///
     /// Looks up a child node at a particular index (panics if the child does not exist)
     ///
-    fn get_child_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> &'a TreeNode {
+    fn get_child_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Rc<TreeNode> {
         let opt_node = index.lookup_index(self);
         let node_ref = opt_node.unwrap();
 
-        &**node_ref
+        node_ref
     }
 
     ///
     /// Looks up a child node at a particular index
     ///
-    fn get_child_ref_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Option<&'a Rc<TreeNode>> {
+    fn get_child_ref_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Option<Rc<TreeNode>> {
         index.lookup_index(self)
     }
 }
@@ -96,17 +98,17 @@ impl TreeNodeLookup for TreeNode {
     ///
     /// Looks up a child node at a particular index (panics if the child does not exist)
     ///
-    fn get_child_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> &'a TreeNode {
+    fn get_child_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Rc<TreeNode> {
         let opt_node = index.lookup_index(self);
         let node_ref = opt_node.unwrap();
 
-        &**node_ref
+        node_ref
     }
 
     ///
     /// Looks up a child node at a particular index
     ///
-    fn get_child_ref_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Option<&'a Rc<TreeNode>> {
+    fn get_child_ref_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Option<Rc<TreeNode>> {
         index.lookup_index(self)
     }
 }

@@ -12,12 +12,12 @@ pub trait TreeNode {
     ///
     /// Retrieves a reference to the child of this tree node (or None if this node has no child)
     ///
-    fn get_child_ref(&self) -> Option<&Rc<TreeNode>>;
+    fn get_child_ref(&self) -> Option<Rc<TreeNode>>;
 
     ///
     /// Retrieves a reference to the sibling of this tree node (or None if this node has no sibling)
     ///
-    fn get_sibling_ref(&self) -> Option<&Rc<TreeNode>>;
+    fn get_sibling_ref(&self) -> Option<Rc<TreeNode>>;
 
     ///
     /// Retrieves the tag attached to this tree node
@@ -116,14 +116,14 @@ impl TreeNode for Rc<TreeNode> {
     ///
     /// Retrieves a reference to the child of this tree node (or None if this node has no child)
     ///
-    fn get_child_ref(&self) -> Option<&Rc<TreeNode>> {
+    fn get_child_ref(&self) -> Option<Rc<TreeNode>> {
         return (**self).get_child_ref();
     }
 
     ///
     /// Retrieves a reference to the sibling of this tree node (or None if this node has no sibling)
     ///
-    fn get_sibling_ref(&self) -> Option<&Rc<TreeNode>> {
+    fn get_sibling_ref(&self) -> Option<Rc<TreeNode>> {
         return (**self).get_sibling_ref();
     }
 

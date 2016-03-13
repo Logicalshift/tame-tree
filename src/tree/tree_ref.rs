@@ -15,15 +15,15 @@ impl TreeNode for TreeRef {
     ///
     /// Retrieves a reference to the child of this tree node (or None if this node has no child)
     ///
-    fn get_child_ref(&self) -> Option<&Rc<TreeNode>> {
+    fn get_child_ref(&self) -> Option<Rc<TreeNode>> {
         (*self.ref_to).get_child_ref()
     }
 
     ///
     /// Retrieves a reference to the sibling of this tree node (or None if this node has no sibling)
     ///
-    fn get_sibling_ref(&self) -> Option<&Rc<TreeNode>> {
-        self.new_sibling.as_ref()
+    fn get_sibling_ref(&self) -> Option<Rc<TreeNode>> {
+        self.new_sibling.to_owned()
     }
 
     ///
