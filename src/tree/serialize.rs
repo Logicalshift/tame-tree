@@ -271,8 +271,8 @@ mod serialize_tests {
         let test = Test { field1: 32, field2: "Hi".to_string(), field3: true };
         let encoded = test.to_tree_node();
 
-        assert!(match encoded.get_child_at("field1").get_value().to_owned() { TreeValue::Int(x) => x == 32, _ => false });
-        assert!(match encoded.get_child_at("field2").get_value().to_owned() { TreeValue::String(x) => x == "Hi", _ => false });
-        assert!(match encoded.get_child_at("field3").get_value().to_owned() { TreeValue::Bool(x) => x == true, _ => false });
+        assert!(match *encoded.get_child_at("field1").get_value() { TreeValue::Int(ref x) => *x == 32, _ => false });
+        assert!(match *encoded.get_child_at("field2").get_value() { TreeValue::String(ref x) => *x == "Hi", _ => false });
+        assert!(match *encoded.get_child_at("field3").get_value() { TreeValue::Bool(ref x) => *x == true, _ => false });
     }
 }
