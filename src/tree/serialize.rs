@@ -10,13 +10,18 @@ use super::values::*;
 ///
 /// Encoder that will write to the specified tree node 
 ///
-struct TreeNodeEncoder<'a> {
-    root: &'a mut MutableTreeNode
+struct TreeNodeEncoder {
+    tag:    String,
+    value:  TreeValue,
+    child:  Option<Rc<TreeNode>>
 }
 
-impl<'a> TreeNodeEncoder<'a> {
-    fn new(root: &'a mut MutableTreeNode) -> TreeNodeEncoder<'a> {
-        TreeNodeEncoder { root: root }
+impl TreeNodeEncoder {
+    fn new() -> TreeNodeEncoder {
+        TreeNodeEncoder { 
+            tag:    "".to_string(), 
+            value:  TreeValue::Nothing,
+            child:  None }
     }
 }
 
@@ -24,51 +29,51 @@ pub enum TreeNodeCodingError {
     UnsupportedType
 }
 
-impl<'a> Encoder for TreeNodeEncoder<'a> {
+impl Encoder for TreeNodeEncoder {
     type Error = TreeNodeCodingError;
 
     fn emit_nil(&mut self) -> Result<(), Self::Error> {
-        self.root.set_tree_value(TreeValue::Nothing);
+        self.value = TreeValue::Nothing;
         Ok(())
     }
 
     fn emit_i32(&mut self, v: i32) -> Result<(), Self::Error> {
-        self.root.set_tree_value(TreeValue::Int(v));
+        self.value = TreeValue::Int(v);
         Ok(())
     }
 
     fn emit_i16(&mut self, v: i16) -> Result<(), Self::Error> {
-        self.root.set_tree_value(TreeValue::Int(v as i32));
+        self.value = TreeValue::Int(v as i32);
         Ok(())
     }
 
     fn emit_i8(&mut self, v: i8) -> Result<(), Self::Error> {
-        self.root.set_tree_value(TreeValue::Int(v as i32));
+        self.value = TreeValue::Int(v as i32);
         Ok(())
     }
 
     fn emit_bool(&mut self, v: bool) -> Result<(), Self::Error> {
-        self.root.set_tree_value(TreeValue::Bool(v));
+        self.value = TreeValue::Bool(v);
         Ok(())
     }
 
     fn emit_f64(&mut self, v: f64) -> Result<(), Self::Error> {
-        self.root.set_tree_value(TreeValue::Real(v));
+        self.value = TreeValue::Real(v);
         Ok(())
     }
 
     fn emit_f32(&mut self, v: f32) -> Result<(), Self::Error> {
-        self.root.set_tree_value(TreeValue::Real(v as f64));
+        self.value = TreeValue::Real(v as f64);
         Ok(())
     }
 
     fn emit_str(&mut self, v: &str) -> Result<(), Self::Error> {
-        self.root.set_tree_value(TreeValue::String(v.to_string()));
+        self.value = TreeValue::String(v.to_string());
         Ok(())
     }
 
     fn emit_struct<F>(&mut self, name: &str, len: usize, f: F) -> Result<(), Self::Error> where F: FnOnce(&mut Self) -> Result<(), Self::Error> {
-        self.root.set_tree_value(TreeValue::String(name.to_string()));
+        self.value = TreeValue::String(name.to_string());
 
         f(self)
     }
@@ -84,7 +89,7 @@ impl<'a> Encoder for TreeNodeEncoder<'a> {
         // Insert a new node into the tree
         let new_node = BasicTree::new(f_name, ());
 
-        self.root.get_child_ref().and_then(|sibling| {
+        self.child.to_owned().and_then(|sibling| {
             new_node.set_sibling_ref(sibling);
             Some(())
         });
@@ -95,13 +100,11 @@ impl<'a> Encoder for TreeNodeEncoder<'a> {
         // Rust thinks that f() needs stuff with a lifetime the same as this struct rather than stuff with a lifetime as long
         // as the function call (it's not obvious from a casual reading of the definition, rust likes to be inscrutable). 
         // This means we need to do dumb stuff to make it work.
-        /*
-        let node_encoder = TreeNodeEncoder::new(&mut new_node);
+        let mut node_encoder = TreeNodeEncoder::new();
         f(&mut node_encoder);
-        */
 
         // Save the node we just created and update the tree
-        self.root.set_child_ref(Rc::new(new_node));
+        self.child = Some(Rc::new(new_node));
 
         Err(TreeNodeCodingError::UnsupportedType)
     }
