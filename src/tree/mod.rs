@@ -4,6 +4,7 @@ pub use self::treenode::*;
 pub use self::values::*;
 pub use self::basictree::*;
 pub use self::encoder::*;
+pub use self::decoder::*;
 
 mod treenode;
 mod values;
@@ -12,3 +13,4 @@ mod treenode_sugar;
 mod treenode_index;
 mod treenode_builder;
 mod encoder;
+mod decoder;
