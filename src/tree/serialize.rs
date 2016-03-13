@@ -95,6 +95,8 @@ impl Encoder for TreeNodeEncoder {
         let mut node_encoder = TreeNodeEncoder::new();
         let encoding_result = f(&mut node_encoder);
 
+        node_encoder.tag = f_name.to_string();
+
         // Short-circuit on error
         if encoding_result.is_err() {
             return encoding_result;
