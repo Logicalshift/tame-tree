@@ -75,15 +75,6 @@ pub trait MutableTreeNode : TreeNode {
     fn set_tag(&mut self, new_tag: &str);
 }
 
-impl<T> ToTreeNode for T where T: TreeNode, T: Clone, T: 'static {
-    ///
-    /// Converts this value into a tree node
-    ///
-    fn to_tree_node(&self) -> Rc<TreeNode> {
-        Rc::new(self.clone())
-    }
-}
-
 impl<T> ToTreeNode for Rc<T> where T: TreeNode, T: 'static {
     ///
     /// Converts this value into a tree node
@@ -121,3 +112,32 @@ impl<'a> ToTreeNode for &'a Rc<TreeNode> {
     }
 }
 
+impl TreeNode for Rc<TreeNode> {
+    ///
+    /// Retrieves a reference to the child of this tree node (or None if this node has no child)
+    ///
+    fn get_child_ref(&self) -> Option<&Rc<TreeNode>> {
+        return (**self).get_child_ref();
+    }
+
+    ///
+    /// Retrieves a reference to the sibling of this tree node (or None if this node has no sibling)
+    ///
+    fn get_sibling_ref(&self) -> Option<&Rc<TreeNode>> {
+        return (**self).get_sibling_ref();
+    }
+
+    ///
+    /// Retrieves the tag attached to this tree node
+    ///
+    fn get_tag(&self) -> &str {
+        return (**self).get_tag();
+    }
+
+    ///
+    /// Retrieves the value attached to this node
+    ///
+    fn get_value(&self) -> &TreeValue {
+        return (**self).get_value();
+    }
+}

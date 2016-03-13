@@ -111,26 +111,6 @@ impl TreeNodeLookup for TreeNode {
     }
 }
 
-// Convenient to be able to do this for Rc<TreeNode>s too
-impl TreeNodeLookup for Rc<TreeNode> {
-    ///
-    /// Looks up a child node at a particular index (panics if the child does not exist)
-    ///
-    fn get_child_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> &'a TreeNode {
-        let opt_node = index.lookup_index(&**self);
-        let node_ref = opt_node.unwrap();
-
-        &**node_ref
-    }
-
-    ///
-    /// Looks up a child node at a particular index
-    ///
-    fn get_child_ref_at<'a, TIndex: TreeNodeIndex>(&'a self, index: TIndex) -> Option<&'a Rc<TreeNode>> {
-        index.lookup_index(&**self)
-    }
-}
-
 #[cfg(test)]
 mod treenode_index_tests {
     use super::super::treenode::*;
