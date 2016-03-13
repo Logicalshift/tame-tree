@@ -31,3 +31,4 @@
 //! Where UNIX uses streams for communication, TreeSync instead uses trees to better support interactive applications.
 
 pub mod tree;
+pub mod component;

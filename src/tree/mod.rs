@@ -1,3 +1,4 @@
+//! Tree traits and utility functions
 
 pub use self::treenode::*;
 pub use self::values::*;
