@@ -1,5 +1,6 @@
 use super::treenode::*;
 use super::values::*;
+use super::super::util::clonecell::*;
 use std::rc::*;
 
 ///
@@ -9,8 +10,8 @@ pub struct BasicTree {
     tag: String,
     value: TreeValue,
 
-    child: Option<Rc<TreeNode>>,
-    sibling: Option<Rc<TreeNode>>
+    child: CloneCell<Option<Rc<TreeNode>>>,
+    sibling: CloneCell<Option<Rc<TreeNode>>>
 }
 
 impl BasicTree {
@@ -18,7 +19,7 @@ impl BasicTree {
     /// Creates a new tree node with a particular tag and no siblings
     ///
     pub fn new<TValue: ToTreeValue>(tag: &str, value: TValue) -> BasicTree {
-        BasicTree { tag: tag.to_string(), value: value.to_tree_value(), child: None, sibling: None }
+        BasicTree { tag: tag.to_string(), value: value.to_tree_value(), child: CloneCell::new(None), sibling: CloneCell::new(None) }
     }
 
     ///
@@ -32,8 +33,8 @@ impl BasicTree {
         BasicTree { 
             tag:        as_tree_node.get_tag().to_owned(), 
             value:      as_tree_node.get_value().to_owned(), 
-            child:      child,
-            sibling:    sibling
+            child:      CloneCell::new(child),
+            sibling:    CloneCell::new(sibling)
         }
     }
 }
@@ -43,20 +44,14 @@ impl TreeNode for BasicTree {
     /// Retrieves a reference to the child of this tree node (or None if this node has no child)
     ///
     fn get_child_ref(&self) -> Option<Rc<TreeNode>> {
-        match self.child {
-            Some(ref child) => Some(child.to_owned()),
-            None => None
-        }
+        self.child.get()
     }
 
     ///
     /// Retrieves a reference to the sibling of this tree node (or None if this node has no sibling)
     ///
     fn get_sibling_ref(&self) -> Option<Rc<TreeNode>> {
-        match self.sibling {
-            Some(ref sibling) => Some(sibling.to_owned()),
-            None => None
-        }
+        self.sibling.get()
     }
 
     ///
@@ -78,29 +73,29 @@ impl MutableTreeNode for BasicTree {
     ///
     /// Sets the child for this tree node
     ///
-    fn set_child_ref(&mut self, new_node: Rc<TreeNode>) {
-        self.child = Some(new_node);
+    fn set_child_ref(&self, new_node: Rc<TreeNode>) {
+        self.child.set(Some(new_node));
     }
 
     ///
     /// Sets the sibling for this tree node
     ///
-    fn set_sibling_ref(&mut self, new_node: Rc<TreeNode>) {
-        self.sibling = Some(new_node);
+    fn set_sibling_ref(&self, new_node: Rc<TreeNode>) {
+        self.sibling.set(Some(new_node));
     }
 
     ///
     /// Unsets the child for this node
     ///
-    fn clear_child(&mut self) {
-        self.child = None;
+    fn clear_child(&self) {
+        self.child.set(None);
     }
 
     ///
     /// Unsets the sibling for this node
     ///
-    fn clear_sibling(&mut self) {
-        self.sibling = None;
+    fn clear_sibling(&self) {
+        self.sibling.set(None);
     }
 
     ///
@@ -168,7 +163,7 @@ mod basictree_tests {
 
     #[test]
     fn can_set_child() {
-        let mut tree = BasicTree::new("test", ());
+        let tree = BasicTree::new("test", ());
 
         tree.set_child(("child", "childvalue"));
 
@@ -179,7 +174,7 @@ mod basictree_tests {
 
     #[test]
     fn can_set_sibling() {
-        let mut tree = BasicTree::new("test", ());
+        let tree = BasicTree::new("test", ());
         let sibling = Rc::new(BasicTree::new("sibling", ()));
 
         tree.set_sibling_ref(sibling);

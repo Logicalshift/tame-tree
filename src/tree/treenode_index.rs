@@ -121,7 +121,7 @@ mod treenode_index_tests {
 
     #[test]
     fn lookup_usize() {
-        let mut tree = BasicTree::new("test", ());
+        let tree = BasicTree::new("test", ());
         let first_child = Rc::new(BasicTree::new("first_child", ()));
 
         tree.set_child_ref(first_child);
@@ -134,7 +134,7 @@ mod treenode_index_tests {
 
     #[test]
     fn can_get_first_child() {
-        let mut tree = BasicTree::new("test", ());
+        let tree = BasicTree::new("test", ());
         let first_child = Rc::new(BasicTree::new("first_child", ()));
 
         tree.set_child_ref(first_child);
@@ -145,7 +145,7 @@ mod treenode_index_tests {
 
     #[test]
     fn can_get_first_child_by_string() {
-        let mut tree = BasicTree::new("test", ());
+        let tree = BasicTree::new("test", ());
         let first_child = Rc::new(BasicTree::new("first_child", ()));
 
         tree.set_child_ref(first_child);

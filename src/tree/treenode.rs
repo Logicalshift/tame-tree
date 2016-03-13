@@ -47,22 +47,22 @@ pub trait MutableTreeNode : TreeNode {
     ///
     /// Sets the child for this tree node
     ///
-    fn set_child_ref(&mut self, new_node: Rc<TreeNode>);
+    fn set_child_ref(&self, new_node: Rc<TreeNode>);
 
     ///
     /// Sets the sibling for this tree node
     ///
-    fn set_sibling_ref(&mut self, new_node: Rc<TreeNode>);
+    fn set_sibling_ref(&self, new_node: Rc<TreeNode>);
 
     ///
     /// Unsets the child for this node
     ///
-    fn clear_child(&mut self);
+    fn clear_child(&self);
 
     ///
     /// Unsets the sibling for this node
     ///
-    fn clear_sibling(&mut self);
+    fn clear_sibling(&self);
 
     ///
     /// Changes the value set for this node.
