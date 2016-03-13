@@ -23,6 +23,17 @@ impl TreeNodeEncoder {
             value:  TreeValue::Nothing,
             child:  None }
     }
+
+    fn to_basic_tree_node(&self) -> BasicTree {
+        let new_node = BasicTree::new(&*self.tag, self.value.to_owned());
+
+        self.child.to_owned().and_then(|child| {
+            new_node.set_child_ref(child);
+            Some(())
+        });
+
+        new_node
+    }
 }
 
 pub enum TreeNodeCodingError {
@@ -79,34 +90,27 @@ impl Encoder for TreeNodeEncoder {
     }
 
     fn emit_struct_field<F>(&mut self, f_name: &str, f_idx: usize, f: F) -> Result<(), Self::Error> where F: FnOnce(&mut Self) -> Result<(), Self::Error> {
-        // Hrm, so what I want to do is create a new encoder with a new node and call f on it.
-        // But rust has other ideas; it doesn't know that f(X) doesn't reference X after it returns, so it moans
-        // Other ideas
-        //   * create a whole new encoder (can't do it, we don't have any access to the struct)
-        //   * swap the reference to the node (can't do it, the new node has the same lifetime problems)
-        //   * use a CloneCell (can't do it, set_tree_value and set_tag aren't supported)
+        // Encode the function into a new encoder
+        let mut node_encoder = TreeNodeEncoder::new();
+        let encoding_error = f(&mut node_encoder);
 
-        // Insert a new node into the tree
-        let new_node = BasicTree::new(f_name, ());
+        // Short-circuit on error
+        if encoding_error.is_err() {
+            return encoding_error;
+        }
+
+        // Replace the child node with the node generated for the new encoder
+        let new_node = node_encoder.to_basic_tree_node();
 
         self.child.to_owned().and_then(|sibling| {
             new_node.set_sibling_ref(sibling);
             Some(())
         });
 
-        // Encode the field into the new node (would be super-elegant if this works but Rust is all 'nooope, you need to write a 
-        // billion more lines of code'). I know *why* but this is stupid, if the encoder function had a better lifetime specifier
-        // it'd be unnecessary.
-        // Rust thinks that f() needs stuff with a lifetime the same as this struct rather than stuff with a lifetime as long
-        // as the function call (it's not obvious from a casual reading of the definition, rust likes to be inscrutable). 
-        // This means we need to do dumb stuff to make it work.
-        let mut node_encoder = TreeNodeEncoder::new();
-        f(&mut node_encoder);
-
         // Save the node we just created and update the tree
         self.child = Some(Rc::new(new_node));
 
-        Err(TreeNodeCodingError::UnsupportedType)
+        Ok(())
     }
 
     fn emit_usize(&mut self, v: usize) -> Result<(), Self::Error> {
