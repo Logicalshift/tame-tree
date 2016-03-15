@@ -63,6 +63,8 @@ macro_rules! tree {
 
 #[cfg(test)]
 mod treenode_builder_tests {
+    use std::rc::*;
+
     use super::super::treenode::*;
     use super::super::basictree::*;
 
@@ -73,11 +75,13 @@ mod treenode_builder_tests {
 
         root.set_children_refs(&child_list);
 
-        assert!(root.get_child_ref().is_some());
-        assert!(root.get_child_ref_at(0).map(|x| x.get_tag() == "child1").unwrap_or(false));
-        assert!(root.get_child_ref_at(1).map(|x| x.get_tag() == "child2").unwrap_or(false));
-        assert!(root.get_child_ref_at(2).map(|x| x.get_tag() == "child3").unwrap_or(false));
-        assert!(root.get_child_ref_at(3).is_none());
+        let root_ref = Rc::new(root);
+
+        assert!(root_ref.get_child_ref().is_some());
+        assert!(root_ref.get_child_ref_at(0).map(|x| x.get_tag() == "child1").unwrap_or(false));
+        assert!(root_ref.get_child_ref_at(1).map(|x| x.get_tag() == "child2").unwrap_or(false));
+        assert!(root_ref.get_child_ref_at(2).map(|x| x.get_tag() == "child3").unwrap_or(false));
+        assert!(root_ref.get_child_ref_at(3).is_none());
     }
 
     #[test]
