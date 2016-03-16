@@ -230,4 +230,13 @@ mod treeaddress_test {
 
         assert!(someTree.get_child_ref_at(Addr("There", (0, ()))).unwrap().get_tag() == "Everywhere");
     }
+
+    #[test]
+    fn address_after_address() {
+        let someTree = tree!("Here", tree!("There", tree!("Everywhere", "Also here")));
+
+        // Address formed of a complicated address with an extra address appended
+        let everywhere_address = Addr("There", ("Everywhere", ()));
+        assert!(someTree.get_child_ref_at(Addr(everywhere_address, (0, ()))).unwrap().get_tag() == "Also here");
+    }
 }
