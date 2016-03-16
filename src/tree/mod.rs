@@ -12,6 +12,7 @@ mod values;
 mod basictree;
 mod treenode_sugar;
 mod treenode_index;
+#[macro_use]
 mod treenode_builder;
 mod encoder;
 mod decoder;

@@ -41,6 +41,7 @@ impl<T: MutableTreeNode> TreeNodeBuilder for T {
 ///
 /// The first parameter is the root item, followed by the child items
 ///
+#[macro_export]
 macro_rules! tree {
     ( $root: expr, $( $child: expr ), * ) => {
         {
