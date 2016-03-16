@@ -24,6 +24,34 @@ impl TreeValue {
             _                   => false
         }
     }
+
+    pub fn to_bool(&self, default: bool) -> bool {
+        match *self {
+            TreeValue::Bool(ref val)    => *val,
+            _                           => default
+        }
+    }
+
+    pub fn to_int(&self, default: i32) -> i32 {
+        match *self {
+            TreeValue::Int(ref val)     => *val,
+            _                           => default
+        }
+    }
+
+    pub fn to_real(&self, default: f64) -> f64 {
+        match *self {
+            TreeValue::Real(ref val)    => *val,
+            _                           => default
+        }
+    }
+
+    pub fn to_str<'a>(&'a self, default: &'a str) -> &'a str {
+        match *self {
+            TreeValue::String(ref val)  => &**val,
+            _                           => default
+        }
+    }
 }
 
 impl ToTreeValue for TreeValue {
