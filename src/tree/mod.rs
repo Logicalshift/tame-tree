@@ -7,6 +7,7 @@ pub use self::encoder::*;
 pub use self::decoder::*;
 pub use self::address::*;
 pub use self::extent::*;
+pub use self::iterator::*;
 
 mod treenode;
 mod values;
@@ -19,3 +20,4 @@ mod encoder;
 mod decoder;
 mod address;
 mod extent;
+mod iterator;

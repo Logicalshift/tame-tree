@@ -12,7 +12,7 @@ pub enum TreeExtent {
 
     /// The entire subtree (all children, and their children, and so on)
     ///
-    /// Unlike Children, this covers the entire subtree
+    /// Unlike Children, this covers the current node and its entire subtree
     SubTree,
 
     /// Nodes beginning at the initial node and then iterated over using a depth-first algorithm for the specified number of iterations

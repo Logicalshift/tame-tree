@@ -190,53 +190,52 @@ impl<TFirst: ToTreeAddress, TSecond: ToTreeAddress> TreeNodeIndex for Addr<TFirs
 
 #[cfg(test)]
 mod treeaddress_test {
-    #[macro_use]
     use super::super::super::tree::*;
 
     #[test]
     fn lookup_here() {
-        let someTree = tree!("Here", "There", "Everywhere");
+        let some_tree = tree!("Here", "There", "Everywhere");
 
-        assert!(someTree.get_child_ref_at(TreeAddress::Here).unwrap().get_tag() == "Here");
+        assert!(some_tree.get_child_ref_at(TreeAddress::Here).unwrap().get_tag() == "Here");
     }
 
     #[test]
     fn lookup_child() {
-        let someTree = tree!("Here", "There", "Everywhere");
+        let some_tree = tree!("Here", "There", "Everywhere");
 
-        assert!(someTree.get_child_ref_at(Addr(0, ())).unwrap().get_tag() == "There");
-        assert!(someTree.get_child_ref_at(Addr(1, ())).unwrap().get_tag() == "Everywhere");
+        assert!(some_tree.get_child_ref_at(Addr(0, ())).unwrap().get_tag() == "There");
+        assert!(some_tree.get_child_ref_at(Addr(1, ())).unwrap().get_tag() == "Everywhere");
     }
 
     #[test]
     fn lookup_tag() {
-        let someTree = tree!("Here", "There", "Everywhere");
+        let some_tree = tree!("Here", "There", "Everywhere");
 
-        assert!(someTree.get_child_ref_at(Addr("There", ())).unwrap().get_tag() == "There");
-        assert!(someTree.get_child_ref_at(Addr("Everywhere", ())).unwrap().get_tag() == "Everywhere");
+        assert!(some_tree.get_child_ref_at(Addr("There", ())).unwrap().get_tag() == "There");
+        assert!(some_tree.get_child_ref_at(Addr("Everywhere", ())).unwrap().get_tag() == "Everywhere");
     }
 
     #[test]
     fn lookup_indexed_tag() {
-        let someTree = tree!("Here", ("Tag", "First"), ("Tag", "Second"));
+        let some_tree = tree!("Here", ("Tag", "First"), ("Tag", "Second"));
 
-        assert!(someTree.get_child_ref_at(Addr(TagIndex("Tag", 0), ())).unwrap().get_value().to_str("") == "First");
-        assert!(someTree.get_child_ref_at(Addr(TagIndex("Tag", 1), ())).unwrap().get_value().to_str("") == "Second");
+        assert!(some_tree.get_child_ref_at(Addr(TagIndex("Tag", 0), ())).unwrap().get_value().to_str("") == "First");
+        assert!(some_tree.get_child_ref_at(Addr(TagIndex("Tag", 1), ())).unwrap().get_value().to_str("") == "Second");
     }
 
     #[test]
     fn lookup_grandchild() {
-        let someTree = tree!("Here", tree!("There", "Everywhere"));
+        let some_tree = tree!("Here", tree!("There", "Everywhere"));
 
-        assert!(someTree.get_child_ref_at(Addr("There", (0, ()))).unwrap().get_tag() == "Everywhere");
+        assert!(some_tree.get_child_ref_at(Addr("There", (0, ()))).unwrap().get_tag() == "Everywhere");
     }
 
     #[test]
     fn address_after_address() {
-        let someTree = tree!("Here", tree!("There", tree!("Everywhere", "Also here")));
+        let some_tree = tree!("Here", tree!("There", tree!("Everywhere", "Also here")));
 
         // Address formed of a complicated address with an extra address appended
         let everywhere_address = Addr("There", ("Everywhere", ()));
-        assert!(someTree.get_child_ref_at(Addr(everywhere_address, (0, ()))).unwrap().get_tag() == "Also here");
+        assert!(some_tree.get_child_ref_at(Addr(everywhere_address, (0, ()))).unwrap().get_tag() == "Also here");
     }
 }
