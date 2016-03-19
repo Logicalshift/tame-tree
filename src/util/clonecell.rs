@@ -4,6 +4,14 @@
 
 use std::cell::*;
 
+///
+/// CloneCell<T> is a variant of Cell<T> that works by cloning its content rather than copying it.
+///
+/// Mainly designed to allow for creating CloneCell<Rc<T>> objects, which are very useful for creating
+/// graphs and trees without the need for runtime checking that RefCell<Rc<T>> would add in. Performance
+/// is probably a wash for this reason: using CloneCell updates the reference count, but using RefCell
+/// adds the overhead of checking and updating the usage count.
+///
 pub struct CloneCell<TContentType> {
     content: UnsafeCell<TContentType>
 }
