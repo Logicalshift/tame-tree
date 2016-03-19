@@ -6,6 +6,7 @@ pub use self::basictree::*;
 pub use self::encoder::*;
 pub use self::decoder::*;
 pub use self::address::*;
+pub use self::extent::*;
 
 mod treenode;
 mod values;
@@ -17,3 +18,4 @@ mod treenode_builder;
 mod encoder;
 mod decoder;
 mod address;
+mod extent;
