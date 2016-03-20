@@ -1,6 +1,8 @@
 use std::rc::*;
 use std::ops::*;
 
+use super::super::tree::*;
+
 pub type PublisherRef = Rc<Publisher>;
 pub type ConsumerRef = Rc<Consumer>;
 
@@ -15,7 +17,10 @@ pub trait Publisher {
 /// A consumer subscribes to published changes to a tree
 ///
 pub trait Consumer {
-
+    ///
+    /// Calls a function whenever a particular section of the tree has changed
+    ///
+    fn subscribe(&mut self, address: TreeAddress, extent: TreeExtent, callback: Fn(TreeAddress, Rc<TreeNode>) -> ());
 }
 
 ///
@@ -25,12 +30,14 @@ impl Publisher for PublisherRef {
 
 }
 
+/*
 ///
 /// ConsumerRefs can be treated directly as consumers for convenience
 ///
 impl Consumer for ConsumerRef {
 
 }
+*/
 
 ///
 /// A component consumes a tree and publishes a tree. 
