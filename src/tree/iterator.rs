@@ -43,6 +43,7 @@ impl TreeNodeIteration for Rc<TreeNode> {
             TreeExtent::Children => self.iter_children(),
 
             TreeExtent::SubTree => {
+                // Don't perform a search of the siblings of this item (combine the 'here' and the 'depth first' iterators)
                 let here        = Box::new(HereIterator::new(self.to_owned()));
                 let child_opt   = self.get_child_ref();
 
@@ -52,8 +53,12 @@ impl TreeNodeIteration for Rc<TreeNode> {
                 }
             },
 
-            TreeExtent::DepthFirst(depth) => {
-                panic!("Not implemented")
+            TreeExtent::DepthFirst(num_nodes) => {
+                // Depth first search starting from this node (including siblings), limited to a requested number of nodes
+                let depth_search    = Box::new(DepthSearchIterator::new(self.to_owned()));
+                let limited         = Box::new(LimitedIterator::new(depth_search, num_nodes));
+
+                limited
             }
 
         }
@@ -217,6 +222,31 @@ impl TreeIterator for ChainedIterator {
             self.next_in_tree()
         } else {
             result
+        }
+    }
+}
+
+///
+/// Limits an iterator to only a certain number of iterations
+///
+struct LimitedIterator {
+    iterator: Box<TreeIterator>,
+    iterations: usize
+}
+
+impl LimitedIterator {
+    fn new(iterator: Box<TreeIterator>, iterations: usize) -> LimitedIterator {
+        LimitedIterator { iterator: iterator, iterations: iterations }
+    }
+}
+
+impl TreeIterator for LimitedIterator {
+    fn next_in_tree(&mut self) -> Option<Rc<TreeNode>> {
+        if self.iterations == 0 {
+            None
+        } else {
+            self.iterations = self.iterations - 1;
+            self.iterator.next_in_tree()
         }
     }
 }

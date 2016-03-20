@@ -22,5 +22,5 @@ pub enum TreeExtent {
     ///
     /// This extent is useful for communicating information about tree differences in the form of a stream than as a tree, as the
     /// 'depth first' enumeration is a good way to serialize a tree.
-    DepthFirst(i32)
+    DepthFirst(usize)
 }
