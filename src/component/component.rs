@@ -10,7 +10,10 @@ pub type ConsumerRef = Box<Consumer>;
 /// A publisher reports changes to a tree
 ///
 pub trait Publisher {
-
+    ///
+    /// Publishes a change to the consumers of this component
+    ///
+    fn publish(&mut self, change: TreeChange);
 }
 
 ///
