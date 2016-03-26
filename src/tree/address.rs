@@ -65,6 +65,72 @@ impl TreeNodeIndex for TreeAddress {
     }
 }
 
+impl TreeAddress {
+    ///
+    /// Returns whether or not address is a parent of this address, or the same address
+    ///
+    /// Will return None if the two addresses are in incompatible formats (eg, if a tag needs to match up against an indexed address)
+    ///
+    pub fn is_parent_of(&self, address: &TreeAddress) -> Option<bool> {
+        match *self {
+            TreeAddress::Here => Some(true),
+
+            TreeAddress::ChildAtIndex(self_index, ref self_child) => {
+                match *address {
+                    TreeAddress::ChildAtIndex(address_index, ref address_child) => {
+                        if self_index == address_index {
+                            self_child.is_parent_of(address_child)
+                        } else {
+                            Some(false)
+                        }
+                    },
+
+                    TreeAddress::Here   => Some(false),
+                    _                   => None
+                }
+            },
+
+            TreeAddress::ChildWithTag(ref self_tag, ref self_child) => {
+                match *address {
+                    TreeAddress::ChildWithTag(ref address_tag, ref address_child) => {
+                        if *self_tag == *address_tag {
+                            self_child.is_parent_of(address_child)
+                        } else {
+                            Some(false)
+                        }
+                    },
+
+                    TreeAddress::Here   => Some(false),
+                    _                   => None
+                }
+            },
+
+            TreeAddress::ChildWithIndexedTag(ref self_tag, self_index, ref self_child) => {
+                match *address {
+                    TreeAddress::ChildWithIndexedTag(ref address_tag, address_index, ref address_child) => {
+                        if self_index == address_index && *self_tag == *address_tag {
+                            self_child.is_parent_of(address_child)
+                        } else {
+                            Some(false)
+                        }
+                    },
+
+                    TreeAddress::Here   => Some(false),
+                    _                   => None
+                }
+            },
+        }
+    }
+
+    ///
+    /// Returns whether or not address is a child of this address or the same address
+    ///
+    #[inline]
+    pub fn is_child_of(&self, address: &TreeAddress) -> Option<bool> {
+        address.is_parent_of(self)
+    }
+}
+
 ///
 /// Structure representing a tag with an index
 ///
@@ -237,5 +303,139 @@ mod treeaddress_test {
         // Address formed of a complicated address with an extra address appended
         let everywhere_address = Addr("There", ("Everywhere", ()));
         assert!(some_tree.get_child_ref_at(Addr(everywhere_address, (0, ()))).unwrap().get_tag() == "Also here");
+    }
+
+    #[test]
+    fn here_is_parent_of_here() {
+        let here        = ().to_tree_address();
+        let is_parent   = here.is_parent_of(&here);
+        let is_child    = here.is_child_of(&here);
+
+        assert!(is_parent.unwrap());
+        assert!(is_child.unwrap());
+    }
+
+    #[test]
+    fn here_is_parent_of_anything() {
+        let here        = ().to_tree_address();
+        let there       = (0, (1, 2)).to_tree_address();
+        let is_parent   = here.is_parent_of(&there);
+        let is_child    = here.is_child_of(&there);
+
+        assert!(is_parent.unwrap());
+        assert!(!is_child.unwrap());
+    }
+
+    #[test]
+    fn nothing_is_parent_of_here() {
+        let here        = ().to_tree_address();
+        let there       = (0, (1, 2)).to_tree_address();
+        let is_parent   = there.is_parent_of(&here);
+        let is_child    = there.is_child_of(&here);
+
+        assert!(!is_parent.unwrap());
+        assert!(is_child.unwrap());
+    }
+
+    #[test]
+    fn same_address_is_parent() {
+        let here        = (0, (1, 2)).to_tree_address();
+        let there       = (0, (1, 2)).to_tree_address();
+        let is_parent   = here.is_parent_of(&there);
+        let is_child    = here.is_child_of(&there);
+
+        assert!(is_parent.unwrap());
+        assert!(is_child.unwrap());
+    }
+
+    #[test]
+    fn indexed_parent() {
+        let here        = (0, 1).to_tree_address();
+        let there       = (0, (1, 2)).to_tree_address();
+        let is_parent   = here.is_parent_of(&there);
+        let is_child    = here.is_child_of(&there);
+
+        assert!(is_parent.unwrap());
+        assert!(!is_child.unwrap());
+    }
+
+    #[test]
+    fn bad_indexed_parent() {
+        let here        = (1, 0).to_tree_address();
+        let there       = (0, (1, 2)).to_tree_address();
+        let is_parent   = here.is_parent_of(&there);
+        let is_child    = here.is_child_of(&there);
+
+        assert!(!is_parent.unwrap());
+        assert!(!is_child.unwrap());
+    }
+
+    #[test]
+    fn tagged_parent() {
+        let here        = ("first", "second").to_tree_address();
+        let there       = ("first", ("second", "third")).to_tree_address();
+        let is_parent   = here.is_parent_of(&there);
+        let is_child    = here.is_child_of(&there);
+
+        assert!(is_parent.unwrap());
+        assert!(!is_child.unwrap());
+    }
+
+    #[test]
+    fn bad_tagged_parent() {
+        let here        = ("other tag", "second").to_tree_address();
+        let there       = ("first", ("second", "third")).to_tree_address();
+        let is_parent   = here.is_parent_of(&there);
+        let is_child    = here.is_child_of(&there);
+
+        assert!(!is_parent.unwrap());
+        assert!(!is_child.unwrap());
+    }
+
+    #[test]
+    fn tagged_indexed_parent() {
+        let here        = (TagIndex("first", 1), TagIndex("second", 2)).to_tree_address();
+        let there       = (TagIndex("first", 1), (TagIndex("second", 2), TagIndex("third", 3))).to_tree_address();
+        let is_parent   = here.is_parent_of(&there);
+        let is_child    = here.is_child_of(&there);
+
+        assert!(is_parent.unwrap());
+        assert!(!is_child.unwrap());
+    }
+
+    #[test]
+    fn bad_tagged_indexed_parent() {
+        let here        = (TagIndex("other tag", 1), TagIndex("second", 2)).to_tree_address();
+        let there       = (TagIndex("first", 1), (TagIndex("second", 2), TagIndex("third", 3))).to_tree_address();
+        let is_parent   = here.is_parent_of(&there);
+        let is_child    = here.is_child_of(&there);
+
+        assert!(!is_parent.unwrap());
+        assert!(!is_child.unwrap());
+    }
+
+    #[test]
+    fn tagged_bad_indexed_parent() {
+        let here        = (TagIndex("first", 2), TagIndex("second", 2)).to_tree_address();
+        let there       = (TagIndex("first", 1), (TagIndex("second", 2), TagIndex("third", 3))).to_tree_address();
+        let is_parent   = here.is_parent_of(&there);
+        let is_child    = here.is_child_of(&there);
+
+        assert!(!is_parent.unwrap());
+        assert!(!is_child.unwrap());
+    }
+
+    #[test]
+    fn different_address_types_cant_be_checked() {
+        let indexed         = 1.to_tree_address();
+        let tagged          = "tag".to_tree_address();
+        let index_tagged    = TagIndex("tag", 0).to_tree_address();
+
+        assert!(indexed.is_parent_of(&tagged).is_none());
+        assert!(indexed.is_parent_of(&index_tagged).is_none());
+        assert!(tagged.is_parent_of(&indexed).is_none());
+        assert!(tagged.is_parent_of(&index_tagged).is_none());
+        assert!(index_tagged.is_parent_of(&indexed).is_none());
+        assert!(index_tagged.is_parent_of(&tagged).is_none());
     }
 }
