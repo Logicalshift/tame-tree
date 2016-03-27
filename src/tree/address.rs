@@ -23,14 +23,14 @@ impl TreeNodeIndex for TreeAddress {
             TreeAddress::Here => Some(parent_node.to_owned()),
             
             TreeAddress::ChildAtIndex(ref pos, ref next) => {
-                (*pos).lookup_index(parent_node).and_then(|new_parent| {
-                    (*next).lookup_index(&new_parent)
+                pos.lookup_index(parent_node).and_then(|new_parent| {
+                    next.lookup_index(&new_parent)
                 })
             },
 
             TreeAddress::ChildWithTag(ref name, ref next) => {
-                (&**name).lookup_index(parent_node).and_then(|new_parent| {
-                    (*next).lookup_index(&new_parent)
+                name.lookup_index(parent_node).and_then(|new_parent| {
+                    next.lookup_index(&new_parent)
                 })
             }
         }

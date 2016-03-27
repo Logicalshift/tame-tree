@@ -59,6 +59,18 @@ impl<'b> TreeNodeIndex for &'b str {
     }
 }
 
+impl TreeNodeIndex for String {
+    ///
+    /// Finds the tree node corresponding to the specified index in the tree
+    ///
+    /// When searching by tag, we match only the first item that we find.
+    ///
+    #[inline]
+    fn lookup_index(&self, parent_node: &Rc<TreeNode>) -> Option<Rc<TreeNode>> {
+        (&**self).lookup_index(parent_node)
+    }
+}
+
 ///
 /// Provides the ability to reference the children of a tree node by looking up a particular index
 ///
