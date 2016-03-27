@@ -65,6 +65,37 @@ impl TreeNodeIndex for TreeAddress {
     }
 }
 
+impl PartialEq for TreeAddress {
+    fn eq(&self, other: &TreeAddress) -> bool {
+        match *self {
+            TreeAddress::Here => {
+                match *other {
+                    TreeAddress::Here   => true,
+                    _                   => false
+                }
+            },
+
+            TreeAddress::ChildAtIndex(self_index, ref self_child) => {
+                match *other {
+                    TreeAddress::ChildAtIndex(rhs_index, ref rhs_child) => self_index == rhs_index && self_child == rhs_child,
+                    _                                                   => false
+                }
+            },
+
+            TreeAddress::ChildWithTag(ref self_tag, ref self_child) => {
+                match *other {
+                    TreeAddress::ChildWithTag(ref rhs_tag, ref rhs_child)   => self_tag == rhs_tag && self_child == rhs_child,
+                    _                                                       => false
+                }
+            },
+
+            _ => false
+        }
+    }
+}
+
+impl Eq for TreeAddress {}
+
 impl TreeAddress {
     ///
     /// Returns whether or not address is a parent of this address, or the same address
@@ -73,8 +104,10 @@ impl TreeAddress {
     ///
     pub fn is_parent_of(&self, address: &TreeAddress) -> Option<bool> {
         match *self {
+            // 'Here' is the root address, the parent of everything (including itself)
             TreeAddress::Here => Some(true),
 
+            // Child addresses must match
             TreeAddress::ChildAtIndex(self_index, ref self_child) => {
                 match *address {
                     TreeAddress::ChildAtIndex(address_index, ref address_child) => {
@@ -128,6 +161,59 @@ impl TreeAddress {
     #[inline]
     pub fn is_child_of(&self, address: &TreeAddress) -> Option<bool> {
         address.is_parent_of(self)
+    }
+
+    ///
+    /// Transforms this address to a new address that is relative to a particular parent address (or None if the addresses 
+    /// are in different formats or if parent_address is not a parent of this address)
+    ///
+    pub fn relative_to(&self, parent_address: &TreeAddress) -> Option<TreeAddress> {
+        match *self {
+            // Here is a root address, so it doesn't match the parent
+            TreeAddress::Here => None,
+
+            // Strip out child addresses
+            TreeAddress::ChildAtIndex(self_index, ref self_child) => {
+                match *parent_address {
+                    // 'Here' is a parent of everything
+                    TreeAddress::Here => Some(self.to_owned()),
+
+                    // We carry on down the tree if we get a matching ChildAtIndex address
+                    TreeAddress::ChildAtIndex(parent_index, ref parent_child) => {
+                        if self_index == parent_index {
+                            self_child.relative_to(parent_child)
+                        } else {
+                            None
+                        }
+                    },
+
+                    // Other address types count as mismatched (we don't know the tree structure, so we can't match tags against indexes)
+                    _ => None
+                }
+            },
+
+            TreeAddress::ChildWithTag(ref self_tag, ref self_child) => {
+                match *parent_address {
+                    // 'Here' is a parent of everything
+                    TreeAddress::Here => Some(self.to_owned()),
+
+                    // We carry on down the tree if we get a matching ChildWithTag address
+                    TreeAddress::ChildWithTag(ref parent_tag, ref parent_child) => {
+                        if self_tag == parent_tag {
+                            self_child.relative_to(parent_child)
+                        } else {
+                            None
+                        }
+                    },
+
+                    // Other address types count as mismatched (we don't know the tree structure, so we can't match tags against indexes)
+                    _ => None
+                }
+            },
+
+            // Unsupported address
+            _ => None
+        }
     }
 }
 
@@ -437,5 +523,39 @@ mod treeaddress_test {
         assert!(tagged.is_parent_of(&index_tagged).is_none());
         assert!(index_tagged.is_parent_of(&indexed).is_none());
         assert!(index_tagged.is_parent_of(&tagged).is_none());
+    }
+
+    #[test]
+    fn can_get_relative_address_with_indexes() {
+        let address     = (1, (2, (3, 4))).to_tree_address();
+        let relativeTo  = (1, 2).to_tree_address();
+        let expected    = (3, 4).to_tree_address();
+
+        assert!(address.relative_to(&relativeTo).unwrap() == expected);
+    }
+
+    #[test]
+    fn can_get_relative_address_with_tags() {
+        let address     = ("one", ("two", ("three", "four"))).to_tree_address();
+        let relativeTo  = ("one", "two").to_tree_address();
+        let expected    = ("three", "four").to_tree_address();
+
+        assert!(address.relative_to(&relativeTo).unwrap() == expected);
+    }
+
+    #[test]
+    fn relative_to_wrong_address_is_none() {
+        let address     = (1, (2, (3, 4))).to_tree_address();
+        let relativeTo  = (3, 4).to_tree_address();
+
+        assert!(address.relative_to(&relativeTo).is_none());
+    }
+
+    #[test]
+    fn relative_to_here_is_none() {
+        let address     = ().to_tree_address();
+        let relativeTo  = (3, 4).to_tree_address();
+
+        assert!(address.relative_to(&relativeTo).is_none());
     }
 }
