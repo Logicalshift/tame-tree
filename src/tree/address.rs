@@ -414,34 +414,34 @@ mod treeaddress_test {
     #[test]
     fn can_get_relative_address_with_indexes() {
         let address     = (1, (2, (3, 4))).to_tree_address();
-        let relativeTo  = (1, 2).to_tree_address();
+        let relative_to = (1, 2).to_tree_address();
         let expected    = (3, 4).to_tree_address();
 
-        assert!(address.relative_to(&relativeTo).unwrap() == expected);
+        assert!(address.relative_to(&relative_to).unwrap() == expected);
     }
 
     #[test]
     fn can_get_relative_address_with_tags() {
         let address     = ("one", ("two", ("three", "four"))).to_tree_address();
-        let relativeTo  = ("one", "two").to_tree_address();
+        let relative_to = ("one", "two").to_tree_address();
         let expected    = ("three", "four").to_tree_address();
 
-        assert!(address.relative_to(&relativeTo).unwrap() == expected);
+        assert!(address.relative_to(&relative_to).unwrap() == expected);
     }
 
     #[test]
     fn relative_to_wrong_address_is_none() {
         let address     = (1, (2, (3, 4))).to_tree_address();
-        let relativeTo  = (3, 4).to_tree_address();
+        let relative_to = (3, 4).to_tree_address();
 
-        assert!(address.relative_to(&relativeTo).is_none());
+        assert!(address.relative_to(&relative_to).is_none());
     }
 
     #[test]
     fn relative_to_here_is_none() {
         let address     = ().to_tree_address();
-        let relativeTo  = (3, 4).to_tree_address();
+        let relative_to = (3, 4).to_tree_address();
 
-        assert!(address.relative_to(&relativeTo).is_none());
+        assert!(address.relative_to(&relative_to).is_none());
     }
 }
