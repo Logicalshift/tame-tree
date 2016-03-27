@@ -41,6 +41,7 @@ pub enum TreeNodeCodingError {
     UnsupportedType
 }
 
+#[allow(unused_variables)]          // Unused function parameters are quite common due to the way this trait is designed
 impl Encoder for TreeNodeEncoder {
     type Error = TreeNodeCodingError;
 

@@ -28,6 +28,7 @@ impl TreeNodeDecoder {
     }
 }
 
+#[allow(unused_variables)]          // Unused function parameters are quite common due to the way this trait is designed
 impl Decoder for TreeNodeDecoder {
     type Error = TreeNodeDecodingError;
 
