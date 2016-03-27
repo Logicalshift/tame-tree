@@ -217,31 +217,6 @@ impl TreeIterator for ChainedIterator {
     }
 }
 
-///
-/// Limits an iterator to only a certain number of iterations
-///
-struct LimitedIterator {
-    iterator: Box<TreeIterator>,
-    iterations: usize
-}
-
-impl LimitedIterator {
-    fn new(iterator: Box<TreeIterator>, iterations: usize) -> LimitedIterator {
-        LimitedIterator { iterator: iterator, iterations: iterations }
-    }
-}
-
-impl TreeIterator for LimitedIterator {
-    fn next_in_tree(&mut self) -> Option<Rc<TreeNode>> {
-        if self.iterations == 0 {
-            None
-        } else {
-            self.iterations = self.iterations - 1;
-            self.iterator.next_in_tree()
-        }
-    }
-}
-
 #[cfg(test)]
 mod iterator_tests {
     use super::super::super::tree::*;
