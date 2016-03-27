@@ -51,16 +51,7 @@ impl TreeNodeIteration for Rc<TreeNode> {
                     Some(child) => Box::new(ChainedIterator::new(here, Box::new(DepthSearchIterator::new(child)))),
                     None        => here
                 }
-            },
-
-            TreeExtent::DepthFirst(num_nodes) => {
-                // Depth first search starting from this node (including siblings), limited to a requested number of nodes
-                let depth_search    = Box::new(DepthSearchIterator::new(self.to_owned()));
-                let limited         = Box::new(LimitedIterator::new(depth_search, num_nodes));
-
-                limited
             }
-
         }
     }
 
@@ -307,23 +298,5 @@ mod iterator_tests {
         let collected   = iterator.collect::<Vec<i32>>();
 
         assert!(collected == vec!(1));
-    }
-
-    #[test]
-    fn iterate_depth() {
-        let tree        = tree!(("root", 0), ("", 1), ("", 2), tree!(("", 3), ("", 4)), ("", 5));
-        let iterator    = tree.iter_extent(TreeExtent::DepthFirst(4)).map(|x| x.get_value().to_int(-1));
-        let collected   = iterator.collect::<Vec<i32>>();
-
-        assert!(collected == vec!(0, 1, 2, 3));
-    }
-
-    #[test]
-    fn iterate_depth_siblings() {
-        let tree        = tree!(("root", 0), ("", 1), ("", 2), tree!(("", 3), ("", 4)), ("", 5));
-        let iterator    = tree.get_child_ref().unwrap().iter_extent(TreeExtent::DepthFirst(4)).map(|x| x.get_value().to_int(-1));
-        let collected   = iterator.collect::<Vec<i32>>();
-
-        assert!(collected == vec!(1, 2, 3, 4));
     }
 }
