@@ -15,9 +15,6 @@ pub enum TreeAddress {
 
     /// Selects a child of this node by tag name, then selects a new address from there
     ChildWithTag(String, Box<TreeAddress>),
-
-    /// Selects a child of this node by looking up the 'nth' child with the specified tag, then selects a new address from there
-    ChildWithIndexedTag(String, usize, Box<TreeAddress>)
 }
 
 impl TreeNodeIndex for TreeAddress {
@@ -35,31 +32,6 @@ impl TreeNodeIndex for TreeAddress {
                 (&**name).lookup_index(parent_node).and_then(|new_parent| {
                     (*next).lookup_index(&new_parent)
                 })
-            },
-
-            TreeAddress::ChildWithIndexedTag(ref name, ref pos, ref next) => {
-                let mut current = parent_node.get_child_ref();
-                let mut remaining = *pos;
-
-                loop {
-                    match current.to_owned() {
-                        Some(ref current_ref) => {
-                            if current_ref.get_tag() == name {
-                                if remaining == 0 {
-                                    return (*next).lookup_index(current_ref);
-                                }
-
-                                remaining = remaining-1;
-                            }
-
-                            current = current_ref.get_sibling_ref();
-                        },
-
-                        None => {
-                            return None;
-                        }
-                    }
-                }
             }
         }
     }
@@ -87,9 +59,7 @@ impl PartialEq for TreeAddress {
                     TreeAddress::ChildWithTag(ref rhs_tag, ref rhs_child)   => self_tag == rhs_tag && self_child == rhs_child,
                     _                                                       => false
                 }
-            },
-
-            _ => false
+            }
         }
     }
 }
@@ -136,22 +106,7 @@ impl TreeAddress {
                     TreeAddress::Here   => Some(false),
                     _                   => None
                 }
-            },
-
-            TreeAddress::ChildWithIndexedTag(ref self_tag, self_index, ref self_child) => {
-                match *address {
-                    TreeAddress::ChildWithIndexedTag(ref address_tag, address_index, ref address_child) => {
-                        if self_index == address_index && *self_tag == *address_tag {
-                            self_child.is_parent_of(address_child)
-                        } else {
-                            Some(false)
-                        }
-                    },
-
-                    TreeAddress::Here   => Some(false),
-                    _                   => None
-                }
-            },
+            }
         }
     }
 
@@ -209,18 +164,10 @@ impl TreeAddress {
                     // Other address types count as mismatched (we don't know the tree structure, so we can't match tags against indexes)
                     _ => None
                 }
-            },
-
-            // Unsupported address
-            _ => None
+            }
         }
     }
 }
-
-///
-/// Structure representing a tag with an index
-///
-pub struct TagIndex<'a>(&'a str, usize);
 
 ///
 /// Structure representing a shorthand address
@@ -261,20 +208,6 @@ impl ToTreeAddress for usize {
     }
 }
 
-impl<'a> ToTreeAddress for TagIndex<'a> {
-    #[inline]
-    fn to_tree_address(&self) -> TreeAddress {
-        let TagIndex(ref tag, ref pos) = *self;
-        TreeAddress::ChildWithIndexedTag((*tag).to_string(), *pos, Box::new(TreeAddress::Here))
-    }
-
-    #[inline]
-    fn to_tree_address_then(&self, then: TreeAddress) -> TreeAddress { 
-        let TagIndex(ref tag, ref pos) = *self;
-        TreeAddress::ChildWithIndexedTag((*tag).to_string(), *pos, Box::new(then))
-    }
-}
-
 impl<'a> ToTreeAddress for &'a str {
     #[inline]
     fn to_tree_address(&self) -> TreeAddress {
@@ -295,10 +228,9 @@ impl ToTreeAddress for TreeAddress {
 
     fn to_tree_address_then(&self, then: TreeAddress) -> TreeAddress { 
         match *self {
-            TreeAddress::Here                                                   => then,
-            TreeAddress::ChildAtIndex(ref index, ref old_then)                  => TreeAddress::ChildAtIndex(*index, Box::new((*old_then).to_tree_address_then(then))),
-            TreeAddress::ChildWithTag(ref tag, ref old_then)                    => TreeAddress::ChildWithTag((*tag).to_owned(), Box::new((*old_then).to_tree_address_then(then))),
-            TreeAddress::ChildWithIndexedTag(ref tag, ref index, ref old_then)  => TreeAddress::ChildWithIndexedTag((*tag).to_owned(), *index, Box::new((*old_then).to_tree_address_then(then)))
+            TreeAddress::Here                                   => then,
+            TreeAddress::ChildAtIndex(ref index, ref old_then)  => TreeAddress::ChildAtIndex(*index, Box::new((*old_then).to_tree_address_then(then))),
+            TreeAddress::ChildWithTag(ref tag, ref old_then)    => TreeAddress::ChildWithTag((*tag).to_owned(), Box::new((*old_then).to_tree_address_then(then)))
         }
     }
 }
@@ -365,14 +297,6 @@ mod treeaddress_test {
 
         assert!(some_tree.get_child_ref_at(Addr("There", ())).unwrap().get_tag() == "There");
         assert!(some_tree.get_child_ref_at(Addr("Everywhere", ())).unwrap().get_tag() == "Everywhere");
-    }
-
-    #[test]
-    fn lookup_indexed_tag() {
-        let some_tree = tree!("Here", ("Tag", "First"), ("Tag", "Second"));
-
-        assert!(some_tree.get_child_ref_at(Addr(TagIndex("Tag", 0), ())).unwrap().get_value().to_str("") == "First");
-        assert!(some_tree.get_child_ref_at(Addr(TagIndex("Tag", 1), ())).unwrap().get_value().to_str("") == "Second");
     }
 
     #[test]
@@ -479,50 +403,12 @@ mod treeaddress_test {
     }
 
     #[test]
-    fn tagged_indexed_parent() {
-        let here        = (TagIndex("first", 1), TagIndex("second", 2)).to_tree_address();
-        let there       = (TagIndex("first", 1), (TagIndex("second", 2), TagIndex("third", 3))).to_tree_address();
-        let is_parent   = here.is_parent_of(&there);
-        let is_child    = here.is_child_of(&there);
-
-        assert!(is_parent.unwrap());
-        assert!(!is_child.unwrap());
-    }
-
-    #[test]
-    fn bad_tagged_indexed_parent() {
-        let here        = (TagIndex("other tag", 1), TagIndex("second", 2)).to_tree_address();
-        let there       = (TagIndex("first", 1), (TagIndex("second", 2), TagIndex("third", 3))).to_tree_address();
-        let is_parent   = here.is_parent_of(&there);
-        let is_child    = here.is_child_of(&there);
-
-        assert!(!is_parent.unwrap());
-        assert!(!is_child.unwrap());
-    }
-
-    #[test]
-    fn tagged_bad_indexed_parent() {
-        let here        = (TagIndex("first", 2), TagIndex("second", 2)).to_tree_address();
-        let there       = (TagIndex("first", 1), (TagIndex("second", 2), TagIndex("third", 3))).to_tree_address();
-        let is_parent   = here.is_parent_of(&there);
-        let is_child    = here.is_child_of(&there);
-
-        assert!(!is_parent.unwrap());
-        assert!(!is_child.unwrap());
-    }
-
-    #[test]
     fn different_address_types_cant_be_checked() {
         let indexed         = 1.to_tree_address();
         let tagged          = "tag".to_tree_address();
-        let index_tagged    = TagIndex("tag", 0).to_tree_address();
 
         assert!(indexed.is_parent_of(&tagged).is_none());
-        assert!(indexed.is_parent_of(&index_tagged).is_none());
         assert!(tagged.is_parent_of(&indexed).is_none());
-        assert!(tagged.is_parent_of(&index_tagged).is_none());
-        assert!(index_tagged.is_parent_of(&indexed).is_none());
-        assert!(index_tagged.is_parent_of(&tagged).is_none());
     }
 
     #[test]
