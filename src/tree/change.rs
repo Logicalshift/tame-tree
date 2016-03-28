@@ -462,4 +462,17 @@ mod change_tests {
         // The .1.2.1 node technically couldn't be affected, but we'll return it too
         assert!(change.applies_to_only(&(1, (2, 1)).to_tree_address()).unwrap());
     }
+
+    #[test]
+    fn applies_to_dispatches_to_correct_function() {
+        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+
+        assert!(change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
+        assert!(change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::Children).unwrap());
+        assert!(change.applies_to(&(1, (2, 3)).to_tree_address(), &TreeExtent::ThisNode).unwrap());
+
+        assert!(!change.applies_to(&2.to_tree_address(), &TreeExtent::SubTree).unwrap());
+        assert!(!change.applies_to(&1.to_tree_address(), &TreeExtent::Children).unwrap());
+        assert!(!change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::ThisNode).unwrap());
+    }
 }
