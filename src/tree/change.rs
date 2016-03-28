@@ -327,9 +327,9 @@ mod change_tests {
     fn sibling_change_applies_to_everything_up_to_root() {
         let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
 
-        assert!(!change.applies_to(&(0, (1, 2)).to_tree_address()).unwrap());
-        assert!(!change.applies_to(&(0, 1).to_tree_address()).unwrap());
-        assert!(!change.applies_to(&1.to_tree_address()).unwrap());
-        assert!(!change.applies_to(&().to_tree_address()).unwrap());
+        assert!(change.applies_to(&(0, (1, 2)).to_tree_address()).unwrap());
+        assert!(change.applies_to(&(0, 1).to_tree_address()).unwrap());
+        assert!(change.applies_to(&1.to_tree_address()).unwrap());
+        assert!(change.applies_to(&().to_tree_address()).unwrap());
     }
 }
