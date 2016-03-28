@@ -159,13 +159,26 @@ impl TreeChange {
     /// The root address starts at an imaginary 'true' root (this makes it possible to specify a change that replaces the entire tree)
     ///
     #[inline]
-    fn address_relative_to_tree_root<'a>(&'a self) -> &'a TreeAddress {
+    fn address_relative_to_tree_root(&self) -> &TreeAddress {
         static HERE: TreeAddress = TreeAddress::Here;
 
         match self.root {
             TreeAddress::Here                           => &HERE,
             TreeAddress::ChildAtIndex(0, ref address)   => &**address,
             _                                           => &HERE
+        }
+    }
+
+    ///
+    /// Determines if a change to a particular address will also affect the value of a different address
+    ///
+    #[inline]
+    fn address_applies(changing_address: &TreeAddress, testing_address: &TreeAddress) -> Option<bool> {
+        let is_parent_of_changing = changing_address.is_parent_of(testing_address);
+
+        match is_parent_of_changing {
+            None | Some(false)  => testing_address.is_parent_of(changing_address),
+            _                   => is_parent_of_changing
         }
     }
 
@@ -177,10 +190,10 @@ impl TreeChange {
 
         match self.change_type {
             // If the child has changed, then anything that's a child of the root address is changed
-            TreeChangeType::Child => relative_root.is_parent_of(address),
+            TreeChangeType::Child => TreeChange::address_applies(relative_root, address),
 
             // If the sibling has changed, then it's the parent address that's changed
-            TreeChangeType::Sibling => relative_root.parent().is_parent_of(address)
+            TreeChangeType::Sibling => TreeChange::address_applies(&relative_root.parent(), address)
         }
     }
 }
@@ -327,8 +340,7 @@ mod change_tests {
     fn sibling_change_applies_to_everything_up_to_root() {
         let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
 
-        assert!(change.applies_to(&(0, (1, 2)).to_tree_address()).unwrap());
-        assert!(change.applies_to(&(0, 1).to_tree_address()).unwrap());
+        assert!(change.applies_to(&(1, 2).to_tree_address()).unwrap());
         assert!(change.applies_to(&1.to_tree_address()).unwrap());
         assert!(change.applies_to(&().to_tree_address()).unwrap());
     }
