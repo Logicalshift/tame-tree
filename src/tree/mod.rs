@@ -10,16 +10,16 @@ pub use self::extent::*;
 pub use self::iterator::*;
 pub use self::change::*;
 
-mod treenode;
-mod values;
-mod basictree;
-mod treenode_sugar;
-mod treenode_index;
+pub mod treenode;
+pub mod values;
+pub mod basictree;
+pub mod treenode_sugar;
+pub mod treenode_index;
 #[macro_use]
-mod treenode_builder;
-mod encoder;
-mod decoder;
-mod address;
-mod extent;
-mod iterator;
-mod change;
+pub mod treenode_builder;
+pub mod encoder;
+pub mod decoder;
+pub mod address;
+pub mod extent;
+pub mod iterator;
+pub mod change;

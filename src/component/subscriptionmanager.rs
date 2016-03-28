@@ -21,11 +21,18 @@ pub struct SubscriptionManager<TData: Clone> {
 
 impl<TData: Clone> SubscriptionManager<TData> {
     ///
+    /// Creates a new subscription manager
+    ///
+    pub fn new() -> SubscriptionManager<TData> {
+        SubscriptionManager { subscriptions: CloneCell::new(vec![]) }
+    }
+
+    ///
     /// Modifies this subscription manager to add the specified subscription
     ///
     pub fn add_subscription(&self, callback_data: TData, callback: ConsumerCallback) {
         // Turn the callback into a reference
-        let new_callback = Rc::new(Subscription::<TData> { callback: callback, data: callback_data });
+        let new_callback = Rc::new(Subscription { callback: callback, data: callback_data });
 
         // Retrieve and update the subscriptions
         let mut subscriptions = self.subscriptions.get();
@@ -47,5 +54,70 @@ impl<TData: Clone> SubscriptionManager<TData> {
                 callback(change);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod subscriptionmanager_tests {
+    use std::rc::*;
+    use std::cell::*;
+
+    use super::*;
+    use super::super::component::*;
+    use super::super::super::tree::*;
+
+    #[test]
+    pub fn can_call_subscription() {
+        // Create a subscription manager and a sample change (doesn't matter what the change is)
+        let manager         = SubscriptionManager::<i32>::new();
+        let a_change        = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, TreeExtent::ThisNode, &"".to_tree_node());
+
+        // Store the change count in a shared cell
+        let change_count    = Rc::new(Cell::<i32>::new(0));
+        let callback_count  = change_count.clone();
+
+        // Must initially be 0
+        assert!(change_count.get() == 0);
+
+        // Create a subscription that updates the change count
+        manager.add_subscription(0, Box::new(move |_change: &TreeChange| { 
+            let count_value = callback_count.get();
+            let new_value   = count_value + 1;
+            callback_count.set(new_value);
+        }));
+
+        // Call the subscription a few times (result should update)
+        manager.call_subscriptions(&|_data| { true }, &a_change);
+        assert!(change_count.get() == 1);
+        manager.call_subscriptions(&|_data| { true }, &a_change);
+        assert!(change_count.get() == 2);
+    }
+
+
+    #[test]
+    pub fn can_filter_subscriptions() {
+        // Create a subscription manager and a sample change (doesn't matter what the change is)
+        let manager         = SubscriptionManager::<i32>::new();
+        let a_change        = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, TreeExtent::ThisNode, &"".to_tree_node());
+
+        // Store the change count in a shared cell
+        let change_count    = Rc::new(Cell::<i32>::new(0));
+        let callback_count  = change_count.clone();
+
+        // Must initially be 0
+        assert!(change_count.get() == 0);
+
+        // Create a subscription that updates the change count
+        manager.add_subscription(0, Box::new(move |_change: &TreeChange| { 
+            let count_value = callback_count.get();
+            let new_value   = count_value + 1;
+            callback_count.set(new_value);
+        }));
+
+        // Call the subscription a few times (result should not update)
+        manager.call_subscriptions(&|_data| { false }, &a_change);
+        assert!(change_count.get() == 0);
+        manager.call_subscriptions(&|_data| { false }, &a_change);
+        assert!(change_count.get() == 0);
     }
 }

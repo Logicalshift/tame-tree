@@ -12,7 +12,7 @@ pub enum TreeChangeType {
     Child,
 
     /// The node's sibling reference has been replaced
-    Sibling,
+    Sibling
 }
 
 ///
