@@ -27,9 +27,6 @@ pub struct TreeChange {
     /// Which of the root's references have changed
     change_type: TreeChangeType,
 
-    /// The extent of the nodes being replaced (starting at the node currently at the replacement reference)
-    replacement_range: TreeExtent,
-
     /// The tree that should replace the changed reference. The last node in this tree (depth-first) will be given the same sibling as the last node in the replacement range
     replacement_tree: Option<TreeRef>
 }
@@ -38,7 +35,7 @@ impl TreeChange {
     ///
     /// Creates a new tree change
     ///
-    pub fn new<TAddress: ToTreeAddress, TNode: ToTreeNode>(root: &TAddress, change_type: TreeChangeType, replacement_range: TreeExtent, replacement_tree: Option<&TNode>) -> TreeChange {
-        TreeChange { root: root.to_tree_address(), change_type: change_type, replacement_range: replacement_range, replacement_tree: replacement_tree.map(|x| x.to_tree_node()) }
+    pub fn new<TAddress: ToTreeAddress, TNode: ToTreeNode>(root: &TAddress, change_type: TreeChangeType, replacement_tree: Option<&TNode>) -> TreeChange {
+        TreeChange { root: root.to_tree_address(), change_type: change_type, replacement_tree: replacement_tree.map(|x| x.to_tree_node()) }
     }
 }
