@@ -159,11 +159,13 @@ impl TreeChange {
     /// The root address starts at an imaginary 'true' root (this makes it possible to specify a change that replaces the entire tree)
     ///
     #[inline]
-    fn address_relative_to_tree_root(&self) -> TreeAddress {
+    fn address_relative_to_tree_root<'a>(&'a self) -> &'a TreeAddress {
+        static HERE: TreeAddress = TreeAddress::Here;
+
         match self.root {
-            TreeAddress::Here                           => TreeAddress::Here,
-            TreeAddress::ChildAtIndex(0, ref address)   => (**address).clone(),
-            _                                           => TreeAddress::Here
+            TreeAddress::Here                           => &HERE,
+            TreeAddress::ChildAtIndex(0, ref address)   => &**address,
+            _                                           => &HERE
         }
     }
 
@@ -175,7 +177,7 @@ impl TreeChange {
 
         match self.change_type {
             // If the child has changed, then anything that's a child of the root address is changed
-            TreeChangeType::Child => relative_root.is_parent_of(address).map(|is_parent| { is_parent && relative_root != *address }),
+            TreeChangeType::Child => relative_root.is_parent_of(address).map(|is_parent| { is_parent && *relative_root != *address }),
 
             // If the sibling has changed, then it's the parent address that's changed
             TreeChangeType::Sibling => relative_root.parent().is_parent_of(address)
