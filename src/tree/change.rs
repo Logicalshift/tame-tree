@@ -81,13 +81,14 @@ impl TreeChange {
                 let mut current     = original_tree.get_child_ref();
 
                 for _ in 0..child_index {
-                    siblings.push(current.clone());
+                    siblings.push(current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", ()))));
 
                     current = current.and_then(|x| x.get_sibling_ref());
                 }
 
                 // Replace the child matching this item
-                let new_child = current.clone().map(|child_tree| TreeChange::perform_apply(&child_tree, &*child_address, change_type, replacement_tree));
+                let child_tree  = current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", ())));
+                let new_child   = TreeChange::perform_apply(&child_tree, &*child_address, change_type, replacement_tree);
                 siblings.push(new_child);
 
                 current = current.and_then(|x| x.get_sibling_ref());
@@ -95,8 +96,8 @@ impl TreeChange {
                 // Pop siblings to generate the new child item
                 while let Some(sibling) = siblings.pop() {
                     match current {
-                        Some(next_sibling)  => current = Some(Rc::new(BasicTree::from_with_sibling(sibling.unwrap(), next_sibling))),
-                        None                => current = sibling,
+                        Some(next_sibling)  => current = Some(Rc::new(BasicTree::from_with_sibling(sibling, next_sibling))),
+                        None                => current = Some(sibling),
                     }
                 }
 
