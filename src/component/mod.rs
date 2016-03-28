@@ -6,3 +6,4 @@ pub use super::tree::*;
 
 mod processor;
 mod component;
+mod subscriptionmanager;
