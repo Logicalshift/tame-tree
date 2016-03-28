@@ -8,6 +8,7 @@ use super::basictree::*;
 ///
 /// Represents which of the root's references have changed
 ///
+#[derive(Clone, Copy)]
 pub enum TreeChangeType {
     /// The node's child reference has been replaced
     Child,
@@ -242,6 +243,23 @@ impl TreeChange {
             TreeExtent::SubTree     => self.applies_to_subtree(address)
         }
     }
+
+    ///
+    /// Creates a new tree change that's relative to a subtree of the tree this change is for
+    ///
+    pub fn relative_to(&self, address: &TreeAddress) -> Option<TreeChange> {
+        // Get the new root relative to the main tree
+        let new_root_opt = self.address_relative_to_tree_root().relative_to(address);
+
+        if let Some(new_root) = new_root_opt {
+            // Prepend the '0' needed to deal with the 'imaginary' root
+            let new_root_relative = (0, new_root).to_tree_address();
+
+            Some(TreeChange::new(&new_root_relative, self.change_type, self.replacement_tree.as_ref()))
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]
@@ -474,5 +492,19 @@ mod change_tests {
         assert!(!change.applies_to(&2.to_tree_address(), &TreeExtent::SubTree).unwrap());
         assert!(!change.applies_to(&1.to_tree_address(), &TreeExtent::Children).unwrap());
         assert!(!change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::ThisNode).unwrap());
+    }
+
+    #[test]
+    fn relative_to_works() {
+        let original_change = TreeChange::new(&(0, (3, (4, (1, 2)))).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let relative_change = original_change.relative_to(&(3, 4).to_tree_address()).unwrap();
+
+        assert!(relative_change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
+        assert!(relative_change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::Children).unwrap());
+        assert!(relative_change.applies_to(&(1, (2, 3)).to_tree_address(), &TreeExtent::ThisNode).unwrap());
+
+        assert!(!relative_change.applies_to(&2.to_tree_address(), &TreeExtent::SubTree).unwrap());
+        assert!(!relative_change.applies_to(&1.to_tree_address(), &TreeExtent::Children).unwrap());
+        assert!(!relative_change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::ThisNode).unwrap());
     }
 }
