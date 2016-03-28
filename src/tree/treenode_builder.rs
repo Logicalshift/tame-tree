@@ -7,13 +7,13 @@ pub trait TreeNodeBuilder {
     ///
     /// Sets the children of a tree node to a set of tree node references
     ///
-    fn set_children_refs<'a>(&mut self, new_children: &'a Vec<Rc<TreeNode>>);
+    fn set_children_refs<'a>(&mut self, new_children: &'a Vec<TreeRef>);
 }
 
-type ChildList = Rc<Vec<Rc<TreeNode>>>;
+type ChildList = Rc<Vec<TreeRef>>;
 
 impl<T: MutableTreeNode> TreeNodeBuilder for T {
-    fn set_children_refs<'a>(&mut self, new_children: &'a Vec<Rc<TreeNode>>) {
+    fn set_children_refs<'a>(&mut self, new_children: &'a Vec<TreeRef>) {
         let num_new_children = new_children.len();
 
         if num_new_children > 0 {
@@ -56,7 +56,7 @@ macro_rules! tree {
 
             root.set_children_refs(&child_list);
 
-            let result: Rc<TreeNode> = Rc::new(root);
+            let result: TreeRef = Rc::new(root);
             result
         }
     }

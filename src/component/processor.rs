@@ -12,5 +12,5 @@ pub trait Processor {
     ///
     /// Transforms an input tree into an output tree
     ///
-    fn process(&self, input_tree: Rc<TreeNode>) -> Rc<TreeNode>;
+    fn process(&self, input_tree: TreeRef) -> TreeRef;
 }

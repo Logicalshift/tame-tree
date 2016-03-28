@@ -33,7 +33,7 @@ pub struct TreeChange {
     replacement_range: TreeExtent,
 
     /// The tree that should replace the changed reference. The last node in this tree (depth-first) will be given the same sibling as the last node in the replacement range
-    replacement_tree: Rc<TreeNode>
+    replacement_tree: TreeRef
 }
 
 impl TreeChange {

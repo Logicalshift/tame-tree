@@ -9,7 +9,7 @@ use super::extent::*;
 ///
 pub trait TreeIterator {
     /// Returns the next item in this tree
-    fn next_in_tree(&mut self) -> Option<Rc<TreeNode>>;
+    fn next_in_tree(&mut self) -> Option<TreeRef>;
 }
 
 pub trait TreeNodeIteration {
@@ -25,15 +25,15 @@ pub trait TreeNodeIteration {
 }
 
 impl Iterator for Box<TreeIterator> {
-    type Item = Rc<TreeNode>;
+    type Item = TreeRef;
 
     #[inline]
-    fn next(&mut self) -> Option<Rc<TreeNode>> {
+    fn next(&mut self) -> Option<TreeRef> {
         self.next_in_tree()
     }
 }
 
-impl TreeNodeIteration for Rc<TreeNode> {
+impl TreeNodeIteration for TreeRef {
     ///
     /// Creates an iterator for a particular extent of the tree
     ///
@@ -80,7 +80,7 @@ impl NoIterator {
 }
 
 impl TreeIterator for NoIterator {
-    fn next_in_tree(&mut self) -> Option<Rc<TreeNode>> {
+    fn next_in_tree(&mut self) -> Option<TreeRef> {
         None
     }
 }
@@ -89,17 +89,17 @@ impl TreeIterator for NoIterator {
 /// Iterates through the siblings of a particular tree node
 ///
 struct SiblingIterator {
-    current: Option<Rc<TreeNode>>
+    current: Option<TreeRef>
 }
 
 impl SiblingIterator {
-    fn new(start: Rc<TreeNode>) -> SiblingIterator {
+    fn new(start: TreeRef) -> SiblingIterator {
         SiblingIterator { current: Some(start) }
     }
 }
 
 impl TreeIterator for SiblingIterator {
-    fn next_in_tree(&mut self) -> Option<Rc<TreeNode>> {
+    fn next_in_tree(&mut self) -> Option<TreeRef> {
         let result = self.current.to_owned();
 
         let next = match self.current {
@@ -116,18 +116,18 @@ impl TreeIterator for SiblingIterator {
 /// Iterates across a single tree node
 ///
 struct HereIterator {
-    current: Option<Rc<TreeNode>>
+    current: Option<TreeRef>
 }
 
 impl HereIterator {
     #[inline]
-    fn new(here: Rc<TreeNode>) -> HereIterator {
+    fn new(here: TreeRef) -> HereIterator {
         HereIterator { current: Some(here) }
     }
 }
 
 impl TreeIterator for HereIterator {
-    fn next_in_tree(&mut self) -> Option<Rc<TreeNode>> {
+    fn next_in_tree(&mut self) -> Option<TreeRef> {
         let result = self.current.to_owned();
 
         self.current = None;
@@ -139,18 +139,18 @@ impl TreeIterator for HereIterator {
 /// Iterates across a whole tree using a depth-first search
 ///
 struct DepthSearchIterator {
-    stack: Vec<Rc<TreeNode>>
+    stack: Vec<TreeRef>
 }
 
 impl DepthSearchIterator {
     #[inline]
-    fn new(start: Rc<TreeNode>) -> DepthSearchIterator {
+    fn new(start: TreeRef) -> DepthSearchIterator {
         DepthSearchIterator { stack: vec!(start) }
     }
 }
 
 impl TreeIterator for DepthSearchIterator {
-    fn next_in_tree(&mut self) -> Option<Rc<TreeNode>> {
+    fn next_in_tree(&mut self) -> Option<TreeRef> {
         // Pop from the stack
         let current = self.stack.pop();
 
@@ -194,7 +194,7 @@ impl ChainedIterator {
 }
 
 impl TreeIterator for ChainedIterator {
-    fn next_in_tree(&mut self) -> Option<Rc<TreeNode>> {
+    fn next_in_tree(&mut self) -> Option<TreeRef> {
         let result = {
             let active = self.iterators.last_mut();
 

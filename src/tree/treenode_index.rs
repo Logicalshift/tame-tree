@@ -8,14 +8,14 @@ pub trait TreeNodeIndex {
     ///
     /// Finds the tree node corresponding to the specified index in the tree
     ///
-    fn lookup_index(&self, parent_node: &Rc<TreeNode>) -> Option<Rc<TreeNode>>;
+    fn lookup_index(&self, parent_node: &TreeRef) -> Option<TreeRef>;
 }
 
 impl TreeNodeIndex for usize {
     ///
     /// Finds the tree node corresponding to the specified index in the tree
     ///
-    fn lookup_index(&self, parent_node: &Rc<TreeNode>) -> Option<Rc<TreeNode>> {
+    fn lookup_index(&self, parent_node: &TreeRef) -> Option<TreeRef> {
         let mut pos = *self;
         let mut current_child = parent_node.get_child_ref();
 
@@ -41,7 +41,7 @@ impl<'b> TreeNodeIndex for &'b str {
     ///
     /// When searching by tag, we match only the first item that we find.
     ///
-    fn lookup_index(&self, parent_node: &Rc<TreeNode>) -> Option<Rc<TreeNode>> {
+    fn lookup_index(&self, parent_node: &TreeRef) -> Option<TreeRef> {
         let mut current_child = parent_node.get_child_ref().to_owned();
 
         loop {
@@ -66,7 +66,7 @@ impl TreeNodeIndex for String {
     /// When searching by tag, we match only the first item that we find.
     ///
     #[inline]
-    fn lookup_index(&self, parent_node: &Rc<TreeNode>) -> Option<Rc<TreeNode>> {
+    fn lookup_index(&self, parent_node: &TreeRef) -> Option<TreeRef> {
         (&**self).lookup_index(parent_node)
     }
 }
@@ -78,20 +78,20 @@ pub trait TreeNodeLookup {
     ///
     /// Looks up a child node at a particular index (panics if the child does not exist)
     ///
-    fn get_child_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> Rc<TreeNode>;
+    fn get_child_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> TreeRef;
 
     ///
     /// Looks up a child node at a particular index
     ///
-    fn get_child_ref_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> Option<Rc<TreeNode>>;
+    fn get_child_ref_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> Option<TreeRef>;
 }
 
 impl<T: TreeNode + 'static> TreeNodeLookup for Rc<T> {
     ///
     /// Looks up a child node at a particular index (panics if the child does not exist)
     ///
-    fn get_child_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> Rc<TreeNode> {
-        let treenode: Rc<TreeNode>  = self.to_owned();
+    fn get_child_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> TreeRef {
+        let treenode: TreeRef  = self.to_owned();
 
         let opt_node = index.lookup_index(&treenode);
         let node_ref = opt_node.unwrap();
@@ -102,18 +102,18 @@ impl<T: TreeNode + 'static> TreeNodeLookup for Rc<T> {
     ///
     /// Looks up a child node at a particular index
     ///
-    fn get_child_ref_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> Option<Rc<TreeNode>> {
-        let treenode: Rc<TreeNode>  = self.to_owned();
+    fn get_child_ref_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> Option<TreeRef> {
+        let treenode: TreeRef  = self.to_owned();
 
         index.lookup_index(&treenode)
     }
 }
 
-impl TreeNodeLookup for Rc<TreeNode> {
+impl TreeNodeLookup for TreeRef {
     ///
     /// Looks up a child node at a particular index (panics if the child does not exist)
     ///
-    fn get_child_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> Rc<TreeNode> {
+    fn get_child_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> TreeRef {
         let opt_node = index.lookup_index(self);
         let node_ref = opt_node.unwrap();
 
@@ -123,7 +123,7 @@ impl TreeNodeLookup for Rc<TreeNode> {
     ///
     /// Looks up a child node at a particular index
     ///
-    fn get_child_ref_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> Option<Rc<TreeNode>> {
+    fn get_child_ref_at<TIndex: TreeNodeIndex>(&self, index: TIndex) -> Option<TreeRef> {
         index.lookup_index(self)
     }
 }
@@ -141,7 +141,7 @@ mod treenode_index_tests {
 
         tree.set_child_ref(first_child);
 
-        let tree_ref: Rc<TreeNode> = tree.to_owned();
+        let tree_ref: TreeRef = tree.to_owned();
         let lookup = 0.lookup_index(&tree_ref);
         assert!(lookup.is_some());
         assert!(lookup.unwrap().get_tag() == "first_child");

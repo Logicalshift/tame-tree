@@ -10,7 +10,7 @@ use super::values::*;
 /// Used to help decode tree nodes into other types
 ///
 struct TreeNodeDecoder {
-    current_node: Rc<TreeNode>
+    current_node: TreeRef
 }
 
 #[derive(Debug)]
@@ -219,14 +219,14 @@ pub trait DecodeFromTreeNode : Sized {
     ///
     /// Creates a new object from a tree node
     ///
-    fn new_from_tree(tree: &Rc<TreeNode>) -> Result<Self, TreeNodeDecodingError>;
+    fn new_from_tree(tree: &TreeRef) -> Result<Self, TreeNodeDecodingError>;
 }
 
 impl<T: Decodable + EncodeToTreeNode> DecodeFromTreeNode for T {
     ///
     /// Creates a new object from a tree node
     ///
-    fn new_from_tree(tree: &Rc<TreeNode>) -> Result<T, TreeNodeDecodingError> {
+    fn new_from_tree(tree: &TreeRef) -> Result<T, TreeNodeDecodingError> {
         let mut decoder = TreeNodeDecoder { current_node: tree.to_owned() };
 
         T::decode(&mut decoder)

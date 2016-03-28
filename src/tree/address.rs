@@ -18,7 +18,7 @@ pub enum TreeAddress {
 }
 
 impl TreeNodeIndex for TreeAddress {
-    fn lookup_index(&self, parent_node: &Rc<TreeNode>) -> Option<Rc<TreeNode>> {
+    fn lookup_index(&self, parent_node: &TreeRef) -> Option<TreeRef> {
         match *self {
             TreeAddress::Here => Some(parent_node.to_owned()),
             
@@ -265,7 +265,7 @@ impl<TFirst: ToTreeAddress, TSecond: ToTreeAddress> ToTreeAddress for Addr<TFirs
 
 impl<TFirst: ToTreeAddress, TSecond: ToTreeAddress> TreeNodeIndex for Addr<TFirst, TSecond> {
     #[inline]
-    fn lookup_index(&self, parent_node: &Rc<TreeNode>) -> Option<Rc<TreeNode>> {
+    fn lookup_index(&self, parent_node: &TreeRef) -> Option<TreeRef> {
         let Addr(ref first, ref second) = *self;
 
         first.to_tree_address_then(second.to_tree_address()).lookup_index(parent_node)

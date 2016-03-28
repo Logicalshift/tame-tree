@@ -10,8 +10,8 @@ pub struct BasicTree {
     tag: String,
     value: TreeValue,
 
-    child: CloneCell<Option<Rc<TreeNode>>>,
-    sibling: CloneCell<Option<Rc<TreeNode>>>
+    child: CloneCell<Option<TreeRef>>,
+    sibling: CloneCell<Option<TreeRef>>
 }
 
 impl BasicTree {
@@ -43,14 +43,14 @@ impl TreeNode for BasicTree {
     ///
     /// Retrieves a reference to the child of this tree node (or None if this node has no child)
     ///
-    fn get_child_ref(&self) -> Option<Rc<TreeNode>> {
+    fn get_child_ref(&self) -> Option<TreeRef> {
         self.child.get()
     }
 
     ///
     /// Retrieves a reference to the sibling of this tree node (or None if this node has no sibling)
     ///
-    fn get_sibling_ref(&self) -> Option<Rc<TreeNode>> {
+    fn get_sibling_ref(&self) -> Option<TreeRef> {
         self.sibling.get()
     }
 
@@ -73,14 +73,14 @@ impl MutableTreeNode for BasicTree {
     ///
     /// Sets the child for this tree node
     ///
-    fn set_child_ref(&self, new_node: Rc<TreeNode>) {
+    fn set_child_ref(&self, new_node: TreeRef) {
         self.child.set(Some(new_node));
     }
 
     ///
     /// Sets the sibling for this tree node
     ///
-    fn set_sibling_ref(&self, new_node: Rc<TreeNode>) {
+    fn set_sibling_ref(&self, new_node: TreeRef) {
         self.sibling.set(Some(new_node));
     }
 
@@ -124,13 +124,13 @@ impl Clone for BasicTree {
 }
 
 impl<'a> ToTreeNode for &'a str {
-    fn to_tree_node(&self) -> Rc<TreeNode> {
+    fn to_tree_node(&self) -> TreeRef {
         Rc::new(BasicTree::new(self, ()))
     }
 }
 
 impl<'a, TValue: ToTreeValue> ToTreeNode for (&'a str, TValue) {
-    fn to_tree_node(&self) -> Rc<TreeNode> {
+    fn to_tree_node(&self) -> TreeRef {
         let (ref tag, ref value) = *self;
         Rc::new(BasicTree::new(tag, value.to_tree_value()))
     }
