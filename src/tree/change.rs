@@ -104,10 +104,38 @@ impl TreeChange {
             },
 
             TreeAddress::ChildWithTag(ref child_tag, ref child_address) => {
-                let child_tree  = original_tree.get_child_at(&**child_tag);
+                // Copy the siblings into a stack
+                let mut siblings    = vec![];
+                let mut current     = original_tree.get_child_ref();
+
+                while current.is_some() {
+                    if let Some(ref child_ref) = current {
+                        // Always true, but it isn't clear how to make while let work here when we need to update the pointer (because it's always borrowed in the loop block)
+                        if child_ref.get_tag() == child_tag {
+                            break;
+                        }
+
+                        siblings.push(child_ref.clone());
+                    }
+
+                    current = current.and_then(|x| x.get_sibling_ref());
+                }
+
+                // Replace the child matching this item
+                let child_tree  = current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", ())));
                 let new_child   = TreeChange::perform_apply(&child_tree, &*child_address, change_type, replacement_tree);
 
-                Rc::new(BasicTree::from_with_child(original_tree, new_child))
+                current = Some(new_child);
+
+                // Pop siblings to generate the new child item
+                while let Some(sibling) = siblings.pop() {
+                    match current {
+                        Some(next_sibling)  => current = Some(Rc::new(BasicTree::from_with_sibling(sibling, next_sibling))),
+                        None                => current = Some(sibling),
+                    }
+                }
+
+                Rc::new(BasicTree::from_with_child(original_tree, current.unwrap()))
             }
         }
     }
