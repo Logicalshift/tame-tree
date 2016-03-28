@@ -1,6 +1,7 @@
 use std::rc::*;
 
 use super::address::*;
+use super::extent::*;
 use super::treenode::*;
 use super::basictree::*;
 
@@ -227,6 +228,18 @@ impl TreeChange {
         match self.change_type {
             TreeChangeType::Child => relative_root.is_parent_of(&address.parent()),
             TreeChangeType::Sibling => relative_root.parent().is_parent_of(&address.parent())
+        }
+    }
+
+    ///
+    /// Returns with or not this change affects a node covered by a given extent relative to an address
+    ///
+    #[inline]
+    pub fn applies_to(&self, address: &TreeAddress, extent: &TreeExtent) -> Option<bool> {
+        match *extent {
+            TreeExtent::ThisNode    => self.applies_to_only(address),
+            TreeExtent::Children    => self.applies_to_child_of(address),
+            TreeExtent::SubTree     => self.applies_to_subtree(address)
         }
     }
 }
