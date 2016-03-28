@@ -89,9 +89,8 @@ impl TreeChange {
                 // Replace the child matching this item
                 let child_tree  = current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", ())));
                 let new_child   = TreeChange::perform_apply(&child_tree, &*child_address, change_type, replacement_tree);
-                siblings.push(new_child);
 
-                current = current.and_then(|x| x.get_sibling_ref());
+                current = Some(new_child);
 
                 // Pop siblings to generate the new child item
                 while let Some(sibling) = siblings.pop() {
@@ -147,13 +146,13 @@ mod change_tests {
     #[test]
     fn can_apply_simple_change_indexed() {
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
-        let change_two      = TreeChange::new(&(0, 0), TreeChangeType::Sibling, Some(&("replaced", 4)));
+        let change_two      = TreeChange::new(&(0, 1), TreeChangeType::Sibling, Some(&("replaced", 4)));
         let changed_tree    = change_two.apply(&initial_tree);
 
         assert!(changed_tree.get_child_ref_at(0).unwrap().get_value().to_int(0) == 1);
-        assert!(changed_tree.get_child_ref_at(1).unwrap().get_value().to_int(0) == 4);
-        assert!(changed_tree.get_child_ref_at(1).unwrap().get_sibling_ref().is_none());
-        assert!(changed_tree.get_child_ref_at(2).is_none());
+        assert!(changed_tree.get_child_ref_at(1).unwrap().get_value().to_int(0) == 2);
+        assert!(changed_tree.get_child_ref_at(2).unwrap().get_value().to_int(0) == 4);
+        assert!(changed_tree.get_child_ref_at(2).unwrap().get_sibling_ref().is_none());
         assert!(changed_tree.get_child_ref_at(3).is_none());
     }
 
