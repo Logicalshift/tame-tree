@@ -63,7 +63,6 @@ mod subscriptionmanager_tests {
     use std::cell::*;
 
     use super::*;
-    use super::super::component::*;
     use super::super::super::tree::*;
 
     #[test]

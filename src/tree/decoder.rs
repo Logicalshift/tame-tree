@@ -1,5 +1,3 @@
-use std::rc::*;
-
 use rustc_serialize::*;
 
 use super::encoder::*;
