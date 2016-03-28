@@ -1,6 +1,8 @@
+use std::rc::*;
+
 use super::address::*;
-use super::extent::*;
 use super::treenode::*;
+use super::basictree::*;
 
 ///
 /// Represents which of the root's references have changed
@@ -37,5 +39,103 @@ impl TreeChange {
     ///
     pub fn new<TAddress: ToTreeAddress, TNode: ToTreeNode>(root: &TAddress, change_type: TreeChangeType, replacement_tree: Option<&TNode>) -> TreeChange {
         TreeChange { root: root.to_tree_address(), change_type: change_type, replacement_tree: replacement_tree.map(|x| x.to_tree_node()) }
+    }
+
+    ///
+    /// Performs a replacement on a basic tree node
+    ///
+    #[inline]
+    fn perform_replacement(node: &BasicTree, change_type: &TreeChangeType, replacement_tree: &Option<TreeRef>) {
+        match *change_type {
+            TreeChangeType::Child => {
+                match *replacement_tree {
+                    Some(ref new_child)     => node.set_child_ref(new_child.clone()),
+                    None                    => node.clear_child()
+                }
+            },
+
+            TreeChangeType::Sibling => {
+                match *replacement_tree {
+                    Some(ref new_sibling)   => node.set_sibling_ref(new_sibling.clone()),
+                    None                    => node.clear_child()
+                }
+            }
+        }
+    }
+
+    ///
+    /// Applies a change to a tree, generating a new tree
+    ///
+    fn perform_apply(original_tree: &TreeRef, address: &TreeAddress, change_type: &TreeChangeType, replacement_tree: &Option<TreeRef>) -> TreeRef {
+        match *address {
+            TreeAddress::Here => {
+                let new_node = BasicTree::from(original_tree);
+                TreeChange::perform_replacement(&new_node, change_type, replacement_tree);
+
+                Rc::new(new_node)
+            },
+
+            TreeAddress::ChildAtIndex(child_index, ref child_address) => {
+                let child_tree  = original_tree.get_child_at(child_index);
+                let new_child   = TreeChange::perform_apply(&child_tree, &*child_address, change_type, replacement_tree);
+
+                Rc::new(BasicTree::from_with_child(original_tree, new_child))
+            },
+
+            TreeAddress::ChildWithTag(ref child_tag, ref child_address) => {
+                let child_tree  = original_tree.get_child_at(&**child_tag);
+                let new_child   = TreeChange::perform_apply(&child_tree, &*child_address, change_type, replacement_tree);
+
+                Rc::new(BasicTree::from_with_child(original_tree, new_child))
+            }
+        }
+    }
+
+    ///
+    /// Creates a new tree from an old tree with this change added to it
+    ///
+    #[inline]
+    pub fn apply(&self, original_tree: &TreeRef) -> TreeRef {
+        // For simplicity, we actualise the 'imaginary' root
+        let imaginary_root      = tree!("", original_tree).to_tree_node();
+        let new_imaginary_root  = TreeChange::perform_apply(&imaginary_root, &self.root, &self.change_type, &self.replacement_tree);
+
+        // Result is the child of the imaginary node (or an empty node if the entire tree is deleted)
+        new_imaginary_root.get_child_ref().unwrap_or_else(|| "".to_tree_node())
+    }
+}
+
+#[cfg(test)]
+mod change_tests {
+    use super::super::super::tree::*;
+
+    #[test]
+    fn can_apply_simple_change() {
+        let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
+        let change_two      = TreeChange::new(&(0, "one"), TreeChangeType::Sibling, Some(&("replaced", 4)));
+        let changed_tree    = change_two.apply(&initial_tree);
+
+        assert!(changed_tree.get_child_ref_at("one").unwrap().get_value().to_int(0) == 1);
+        assert!(changed_tree.get_child_ref_at("replaced").unwrap().get_value().to_int(0) == 4);
+        assert!(changed_tree.get_child_ref_at("replaced").unwrap().get_sibling_ref().is_none());
+        assert!(changed_tree.get_child_ref_at("two").is_none());
+        assert!(changed_tree.get_child_ref_at("three").is_none());
+    }
+
+    #[test]
+    fn can_apply_child_change() {
+        let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
+        let change_two      = TreeChange::new(&("test", "two").to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let changed_tree    = change_two.apply(&initial_tree);
+
+        assert!(!changed_tree.get_child_ref_at(("two", "new_child").to_tree_address()).is_none());
+
+        assert!(changed_tree.get_child_ref_at(("two", "new_child").to_tree_address()).unwrap().get_value().to_int(0) == 4);
+        assert!(changed_tree.get_child_ref_at(("two", "new_child").to_tree_address()).unwrap().get_sibling_ref().is_none());
+
+        assert!(!changed_tree.get_child_ref_at("one").is_none());
+        assert!(!changed_tree.get_child_ref_at("two").is_none());
+        assert!(!changed_tree.get_child_ref_at("three").is_none());
+        assert!(changed_tree.get_child_ref_at("two").unwrap().get_value().to_int(0) == 2);
     }
 }
