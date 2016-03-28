@@ -17,13 +17,18 @@ pub trait Publisher {
 }
 
 ///
+/// Type of a consumer callback function
+///
+pub type ConsumerCallback = Box<Fn(TreeChange) -> ()>;
+
+///
 /// A consumer subscribes to published changes to a tree
 ///
 pub trait Consumer {
     ///
     /// Calls a function whenever a particular section of the tree has changed
     ///
-    fn subscribe(&mut self, address: TreeAddress, extent: TreeExtent, callback: Fn(TreeChange) -> ());
+    fn subscribe(&mut self, address: TreeAddress, extent: TreeExtent, callback: ConsumerCallback);
 }
 
 ///
