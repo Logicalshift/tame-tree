@@ -52,6 +52,21 @@ impl BasicTree {
             sibling:    CloneCell::new(sibling)
         }
     }
+
+    ///
+    /// Copies a node into a new basic node and replaces the sibling (the child is preserved)
+    ///
+    pub fn from_with_sibling<TNode: ToTreeNode>(node: TNode, new_sibling: TreeRef) -> BasicTree {
+        let as_tree_node    = node.to_tree_node();
+        let child           = as_tree_node.get_child_ref();
+
+        BasicTree { 
+            tag:        as_tree_node.get_tag().to_owned(), 
+            value:      as_tree_node.get_value().to_owned(), 
+            child:      CloneCell::new(child),
+            sibling:    CloneCell::new(Some(new_sibling))
+        }
+    }
 }
 
 impl TreeNode for BasicTree {
