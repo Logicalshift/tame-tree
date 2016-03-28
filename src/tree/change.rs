@@ -154,15 +154,31 @@ impl TreeChange {
     }
 
     ///
+    /// Converts the root address to one that's relative to the tree being changed
+    ///
+    /// The root address starts at an imaginary 'true' root (this makes it possible to specify a change that replaces the entire tree)
+    ///
+    #[inline]
+    fn address_relative_to_tree_root(&self) -> TreeAddress {
+        match self.root {
+            TreeAddress::Here                           => TreeAddress::Here,
+            TreeAddress::ChildAtIndex(0, ref address)   => (**address).clone(),
+            _                                           => TreeAddress::Here
+        }
+    }
+
+    ///
     /// Returns whether or not this change covers the specified address (or false if this cannot be determined)
     ///
     pub fn applies_to(&self, address: &TreeAddress) -> Option<bool> {
+        let relative_root = self.address_relative_to_tree_root();
+
         match self.change_type {
             // If the child has changed, then anything that's a child of the root address is changed
-            TreeChangeType::Child => self.root.to_tree_address().is_parent_of(address).map(|is_parent| { is_parent && self.root != *address }),
+            TreeChangeType::Child => relative_root.is_parent_of(address).map(|is_parent| { is_parent && relative_root != *address }),
 
             // If the sibling has changed, then it's the parent address that's changed
-            TreeChangeType::Sibling => self.root.parent().is_parent_of(address)
+            TreeChangeType::Sibling => relative_root.parent().is_parent_of(address)
         }
     }
 }
@@ -232,44 +248,56 @@ mod change_tests {
     }
 
     #[test]
-    fn child_change_applies_to_child_tree() {
-        let change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+    fn true_root_applies_to_everything() {
+        // The child of address 0 represents the entire tree
+        let change = TreeChange::new(&0.to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
 
-        assert!(change.applies_to(&(0, (1, 2)).to_tree_address()).unwrap());
+        // Note that the tree change applies to (0, 1) but it's relative to an imaginary root
+        assert!(change.applies_to(&().to_tree_address()).unwrap());
+        assert!(change.applies_to(&(1).to_tree_address()).unwrap());
+        assert!(change.applies_to(&(1, 2).to_tree_address()).unwrap());
     }
 
     #[test]
-    fn child_change_does_not_apply_to_other_tree() {
+    fn child_change_applies_to_child_tree() {
         let change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
 
-        assert!(!change.applies_to(&(0, (2, 2)).to_tree_address()).unwrap());
+        // Note that the tree change applies to (0, 1) but it's relative to an imaginary root
+        assert!(change.applies_to(&(1, 2).to_tree_address()).unwrap());
     }
 
     #[test]
     fn child_change_does_not_apply_to_parent() {
         let change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
 
-        assert!(!change.applies_to(&(0, 1).to_tree_address()).unwrap());
+        assert!(!change.applies_to(&1.to_tree_address()).unwrap());
+    }
+
+    #[test]
+    fn child_change_does_not_apply_to_other_tree() {
+        let change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+
+        assert!(!change.applies_to(&(2, 2).to_tree_address()).unwrap());
     }
 
     #[test]
     fn sibling_change_applies_to_parent() {
         let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
 
-        assert!(change.applies_to(&(0, 1).to_tree_address()).unwrap());
+        assert!(change.applies_to(&1.to_tree_address()).unwrap());
     }
 
     #[test]
     fn sibling_change_does_not_apply_to_different_parent() {
         let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
 
-        assert!(!change.applies_to(&(0, 2).to_tree_address()).unwrap());
+        assert!(!change.applies_to(&2.to_tree_address()).unwrap());
     }
 
     #[test]
     fn sibling_change_does_not_apply_to_grandparent() {
-        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
 
-        assert!(!change.applies_to(&0.to_tree_address()).unwrap());
+        assert!(!change.applies_to(&1.to_tree_address()).unwrap());
     }
 }
