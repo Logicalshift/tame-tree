@@ -329,7 +329,7 @@ mod change_tests {
     #[test]
     fn true_root_applies_to_subtree_everything() {
         // The child of address 0 represents the entire tree
-        let change = TreeChange::new(&0.to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let change = TreeChange::new(&0.to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
 
         // Note that the tree change applies to (0, 1) but it's relative to an imaginary root
         assert!(change.applies_to_subtree(&().to_tree_address()).unwrap());
@@ -339,7 +339,7 @@ mod change_tests {
 
     #[test]
     fn child_change_applies_to_subtree_child_tree() {
-        let change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
 
         // Note that the tree change applies to (0, 1) but it's relative to an imaginary root
         assert!(change.applies_to_subtree(&(1, 2).to_tree_address()).unwrap());
@@ -348,7 +348,7 @@ mod change_tests {
 
     #[test]
     fn child_change_applies_to_subtree_everything_up_to_root() {
-        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
 
         assert!(change.applies_to_subtree(&(1, 2).to_tree_address()).unwrap());
         assert!(change.applies_to_subtree(&1.to_tree_address()).unwrap());
@@ -357,7 +357,7 @@ mod change_tests {
 
     #[test]
     fn child_change_does_not_apply_to_sibling() {
-        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
 
         assert!(!change.applies_to_subtree(&(1, 1).to_tree_address()).unwrap());
         assert!(!change.applies_to_subtree(&2.to_tree_address()).unwrap());
@@ -365,35 +365,35 @@ mod change_tests {
 
     #[test]
     fn child_change_does_not_apply_to_other_tree() {
-        let change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
 
         assert!(!change.applies_to_subtree(&(2, 2).to_tree_address()).unwrap());
     }
 
     #[test]
     fn sibling_change_applies_to_subtree_parent() {
-        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Sibling, None::<&TreeRef>);
 
         assert!(change.applies_to_subtree(&1.to_tree_address()).unwrap());
     }
 
     #[test]
     fn sibling_change_applies_to_subtree_sibling() {
-        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Sibling, None::<&TreeRef>);
 
         assert!(change.applies_to_subtree(&(1, 3).to_tree_address()).unwrap());
     }
 
     #[test]
     fn sibling_change_applies_to_subtree_child() {
-        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Sibling, None::<&TreeRef>);
 
         assert!(change.applies_to_subtree(&(1, (2, 3)).to_tree_address()).unwrap());
     }
 
     #[test]
     fn sibling_change_does_not_apply_to_parent_sibling() {
-        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, None::<&TreeRef>);
 
         assert!(!change.applies_to_subtree(&2.to_tree_address()).unwrap());
         assert!(!change.applies_to_subtree(&(1, 3).to_tree_address()).unwrap());
@@ -402,7 +402,7 @@ mod change_tests {
 
     #[test]
     fn sibling_change_applies_to_subtree_everything_up_to_root() {
-        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, None::<&TreeRef>);
 
         assert!(change.applies_to_subtree(&(1, 2).to_tree_address()).unwrap());
         assert!(change.applies_to_subtree(&1.to_tree_address()).unwrap());
@@ -411,7 +411,7 @@ mod change_tests {
 
     #[test]
     fn applies_to_child_only_true_for_changes_affecting_nodes_children() {
-        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
 
         // Doesn't apply to things 'above' the change (the direct children of .1 are unaffected by the change)
         assert!(!change.applies_to_child_of(&().to_tree_address()).unwrap());
@@ -427,7 +427,7 @@ mod change_tests {
 
     #[test]
     fn applies_to_child_only_true_for_changes_affecting_nodes_children_with_siblings() {
-        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, None::<&TreeRef>);
 
         // Doesn't apply to things 'above' the change (the direct children of .1 are unaffected by the change)
         assert!(!change.applies_to_child_of(&().to_tree_address()).unwrap());
@@ -444,7 +444,7 @@ mod change_tests {
 
     #[test]
     fn applies_to_only_true_for_exact_children() {
-        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
 
         // Doesn't apply to things 'above' the change (the direct children of .1 are unaffected by the change)
         assert!(!change.applies_to_only(&().to_tree_address()).unwrap());
@@ -462,7 +462,7 @@ mod change_tests {
 
     #[test]
     fn applies_to_only_true_for_exact_children_with_siblings() {
-        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, None::<&TreeRef>);
 
         // Doesn't apply to things 'above' the change (the direct children of .1 are unaffected by the change)
         assert!(!change.applies_to_only(&().to_tree_address()).unwrap());
@@ -483,7 +483,7 @@ mod change_tests {
 
     #[test]
     fn applies_to_dispatches_to_correct_function() {
-        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
 
         assert!(change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
         assert!(change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::Children).unwrap());
@@ -496,7 +496,7 @@ mod change_tests {
 
     #[test]
     fn relative_to_works() {
-        let original_change = TreeChange::new(&(0, (3, (4, (1, 2)))).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let original_change = TreeChange::new(&(0, (3, (4, (1, 2)))).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
         let relative_change = original_change.relative_to(&(3, 4).to_tree_address()).unwrap();
 
         assert!(relative_change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
