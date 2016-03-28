@@ -185,6 +185,8 @@ impl TreeChange {
     ///
     /// Returns whether or not this change covers the specified address (or false if this cannot be determined)
     ///
+    /// Corresponds to testing for an extent of `TreeExtent::SubTree`
+    ///
     pub fn applies_to_subtree(&self, address: &TreeAddress) -> Option<bool> {
         let relative_root = self.address_relative_to_tree_root();
 
@@ -194,6 +196,23 @@ impl TreeChange {
 
             // If the sibling has changed, then it's the parent address that's changed
             TreeChangeType::Sibling => TreeChange::address_applies(&relative_root.parent(), address)
+        }
+    }
+
+    ///
+    /// Returns whether or not this change affects the child of a paticular address
+    ///
+    /// Corresponds to testing for an extent of `TreeExtent::Children`
+    ///
+    pub fn applies_to_child_of(&self, address: &TreeAddress) -> Option<bool> {
+        let relative_root = self.address_relative_to_tree_root();
+
+        match self.change_type {
+            // If the child has changed, then anything that's a child of the root address is changed
+            TreeChangeType::Child => relative_root.is_parent_of(address),
+
+            // If the sibling has changed, then it's the parent address that's changed
+            TreeChangeType::Sibling => relative_root.parent().is_parent_of(address)
         }
     }
 }
@@ -343,5 +362,38 @@ mod change_tests {
         assert!(change.applies_to_subtree(&(1, 2).to_tree_address()).unwrap());
         assert!(change.applies_to_subtree(&1.to_tree_address()).unwrap());
         assert!(change.applies_to_subtree(&().to_tree_address()).unwrap());
+    }
+
+    #[test]
+    fn applies_to_child_only_true_for_changes_affecting_nodes_children() {
+        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
+
+        // Doesn't apply to things 'above' the change (the direct children of .1 are unaffected by the change)
+        assert!(!change.applies_to_child_of(&().to_tree_address()).unwrap());
+        assert!(!change.applies_to_child_of(&(1).to_tree_address()).unwrap());
+
+        // This will apply to the children of the .1.2 node
+        assert!(change.applies_to_child_of(&(1, 2).to_tree_address()).unwrap());
+
+        // We've replaced the child of .1.2 so the address .1.2.3 will be affected (as will .1.2.3.4, etc)
+        assert!(change.applies_to_child_of(&(1, (2, 3)).to_tree_address()).unwrap());
+        assert!(change.applies_to_child_of(&(1, (2, (3, 4))).to_tree_address()).unwrap());
+    }
+
+    #[test]
+    fn applies_to_child_only_true_for_changes_affecting_nodes_children_with_siblings() {
+        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
+
+        // Doesn't apply to things 'above' the change (the direct children of .1 are unaffected by the change)
+        assert!(!change.applies_to_child_of(&().to_tree_address()).unwrap());
+        assert!(!change.applies_to_child_of(&(1).to_tree_address()).unwrap());
+
+        // This will apply to the children of the .1.2 node
+        assert!(change.applies_to_child_of(&(1, 2).to_tree_address()).unwrap());
+
+        // We've replaced a sibling of .1.2.3 so the address .1.2.3 will be affected (as will .1.2.4, etc)
+        // For simplicity we also specify that .1.2.2 and lower are affected by the change too
+        assert!(change.applies_to_child_of(&(1, (2, 1)).to_tree_address()).unwrap());
+        assert!(change.applies_to_child_of(&(1, (2, (5, 6))).to_tree_address()).unwrap());
     }
 }
