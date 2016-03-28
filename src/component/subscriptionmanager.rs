@@ -9,7 +9,7 @@ struct Subscription<TData: Clone> {
     data: TData
 }
 
-type SubscriptionRef<TData: Clone> = Rc<Subscription<TData>>;
+type SubscriptionRef<TData> = Rc<Subscription<TData>>;
 
 ///
 /// The subscription manager is an interior mutable type that can store subscriptions created from consumers.
