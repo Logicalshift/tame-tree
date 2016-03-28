@@ -165,6 +165,31 @@ impl TreeAddress {
             }
         }
     }
+
+    ///
+    /// Returns the parent of the current address
+    ///
+    pub fn parent(&self) -> TreeAddress {
+        match *self {
+            // 'Here' doesn't have a parent other than itself
+            TreeAddress::Here => TreeAddress::Here,
+
+            // The child addresses strip the last child (the one where the address is 'Here')
+            TreeAddress::ChildAtIndex(index, ref child) => {
+                match **child {
+                    TreeAddress::Here   => TreeAddress::Here,
+                    _                   => TreeAddress::ChildAtIndex(index, Box::new(child.parent()))
+                }
+            },
+
+            TreeAddress::ChildWithTag(ref tag, ref child) => {
+                match **child {
+                    TreeAddress::Here   => TreeAddress::Here,
+                    _                   => TreeAddress::ChildWithTag(tag.clone(), Box::new(child.parent()))
+                }
+            }
+        }
+    }
 }
 
 ///
@@ -441,5 +466,28 @@ mod treeaddress_test {
         let relative_to = (3, 4).to_tree_address();
 
         assert!(address.relative_to(&relative_to).is_none());
+    }
+
+    #[test]
+    fn get_parent_indexed() {
+        let address         = (0, (1, 2)).to_tree_address();
+        let parent_address  = address.parent();
+        let expected_parent = (0, 1).to_tree_address();
+
+        assert!(parent_address == expected_parent);
+    }
+
+    #[test]
+    fn get_parent_tagged() {
+        let address         = ("tag", ("tag2", "tag3")).to_tree_address();
+        let parent_address  = address.parent();
+        let expected_parent = ("tag", "tag2").to_tree_address();
+
+        assert!(parent_address == expected_parent);
+    }
+
+    #[test]
+    fn get_parent_here() {
+        assert!(TreeAddress::Here.parent() == TreeAddress::Here);
     }
 }
