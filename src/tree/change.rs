@@ -177,7 +177,7 @@ impl TreeChange {
 
         match self.change_type {
             // If the child has changed, then anything that's a child of the root address is changed
-            TreeChangeType::Child => relative_root.is_parent_of(address).map(|is_parent| { is_parent && *relative_root != *address }),
+            TreeChangeType::Child => relative_root.is_parent_of(address),
 
             // If the sibling has changed, then it's the parent address that's changed
             TreeChangeType::Sibling => relative_root.parent().is_parent_of(address)
@@ -316,9 +316,11 @@ mod change_tests {
 
     #[test]
     fn sibling_change_does_not_apply_to_parent_sibling() {
-        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
+        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, Some(&("new_child", 4)));
 
         assert!(!change.applies_to(&2.to_tree_address()).unwrap());
+        assert!(!change.applies_to(&(1, 3).to_tree_address()).unwrap());
+        assert!(!change.applies_to(&(1, (3, 4)).to_tree_address()).unwrap());
     }
 
     #[test]
