@@ -69,7 +69,7 @@ mod subscriptionmanager_tests {
     pub fn can_call_subscription() {
         // Create a subscription manager and a sample change (doesn't matter what the change is)
         let manager         = SubscriptionManager::<i32>::new();
-        let a_change        = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, TreeExtent::ThisNode, &"".to_tree_node());
+        let a_change        = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, TreeExtent::ThisNode, Some(&"".to_tree_node()));
 
         // Store the change count in a shared cell
         let change_count    = Rc::new(Cell::<i32>::new(0));
@@ -96,7 +96,7 @@ mod subscriptionmanager_tests {
     pub fn can_filter_all_subscriptions() {
         // Create a subscription manager and a sample change (doesn't matter what the change is)
         let manager         = SubscriptionManager::<i32>::new();
-        let a_change        = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, TreeExtent::ThisNode, &"".to_tree_node());
+        let a_change        = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, TreeExtent::ThisNode, Some(&"".to_tree_node()));
 
         // Store the change count in a shared cell
         let change_count    = Rc::new(Cell::<i32>::new(0));
@@ -123,7 +123,7 @@ mod subscriptionmanager_tests {
     pub fn can_filter_some_subscriptions() {
         // Create a subscription manager and a sample change (doesn't matter what the change is)
         let manager         = SubscriptionManager::<i32>::new();
-        let a_change        = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, TreeExtent::ThisNode, &"".to_tree_node());
+        let a_change        = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, TreeExtent::ThisNode, Some(&"".to_tree_node()));
 
         // Store the change count in a shared cell
         let change_count    = Rc::new(Cell::<i32>::new(0));
