@@ -495,7 +495,7 @@ mod change_tests {
     }
 
     #[test]
-    fn relative_to_works() {
+    fn relative_to_works_when_change_is_subtree() {
         let original_change = TreeChange::new(&(0, (3, (4, (1, 2)))).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
         let relative_change = original_change.relative_to(&(3, 4).to_tree_address()).unwrap();
 
@@ -506,5 +506,93 @@ mod change_tests {
         assert!(!relative_change.applies_to(&2.to_tree_address(), &TreeExtent::SubTree).unwrap());
         assert!(!relative_change.applies_to(&1.to_tree_address(), &TreeExtent::Children).unwrap());
         assert!(!relative_change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::ThisNode).unwrap());
+    }
+
+    #[test]
+    fn relative_to_works_when_change_is_larger_tree() {
+        // Change the child of .1 to have the subtree one -> two -> three (ie, we get a tree .1.0.0.0)
+        let original_change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&tree!("one", tree!("two", tree!("three", "four"), "five"))));
+
+        // .1.0.0 should represent the 'two' change
+        let relative_change = original_change.relative_to(&(1, (0, 0)).to_tree_address()).unwrap();
+
+        // 'three', the first child of the 'two' node
+        assert!(relative_change.applies_to(&0.to_tree_address(), &TreeExtent::SubTree).unwrap());
+
+        // 'five', the second child
+        assert!(relative_change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
+
+        // Should be able to apply to the empty tree
+        let empty_tree      = tree!("empty", "");
+        let changed_tree    = relative_change.apply(&empty_tree);
+
+        assert!(changed_tree.get_tag() == "two");
+        assert!(changed_tree.get_child_at(0).get_tag() == "three");
+    }
+
+    #[test]
+    fn relative_to_works_when_change_is_larger_tree_and_sibling() {
+        // Change the child of .1 to have the subtree one -> two -> three (ie, we get a tree .1.0.0.0)
+        let original_change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Sibling, Some(&tree!("one", tree!("two", tree!("three", "four"), "five"))));
+
+        // .1.0.0 should represent the 'two' change
+        let relative_change = original_change.relative_to(&(2, 0).to_tree_address()).unwrap();
+
+        // 'three', the first child of the 'two' node
+        assert!(relative_change.applies_to(&0.to_tree_address(), &TreeExtent::SubTree).unwrap());
+
+        // 'five', the second child
+        assert!(relative_change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
+
+        // Should be able to apply to the empty tree
+        let empty_tree      = tree!("empty", "");
+        let changed_tree    = relative_change.apply(&empty_tree);
+
+        assert!(changed_tree.get_tag() == "two");
+        assert!(changed_tree.get_child_at(0).get_tag() == "three");
+    }
+
+    #[test]
+    fn relative_to_works_when_change_is_larger_tree_and_tagged() {
+        // Change the child of .1 to have the subtree one -> two -> three (ie, we get a tree .1.0.0.0)
+        let original_change = TreeChange::new(&(0, "root").to_tree_address(), TreeChangeType::Child, Some(&tree!("one", tree!("two", tree!("three", "four"), "five"))));
+
+        // .1.0.0 should represent the 'two' change
+        let relative_change = original_change.relative_to(&("root", ("one", "two")).to_tree_address()).unwrap();
+
+        // 'three', the first child of the 'two' node
+        assert!(relative_change.applies_to(&0.to_tree_address(), &TreeExtent::SubTree).unwrap());
+
+        // 'five', the second child
+        assert!(relative_change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
+
+        // Should be able to apply to the empty tree
+        let empty_tree      = tree!("empty", "");
+        let changed_tree    = relative_change.apply(&empty_tree);
+
+        assert!(changed_tree.get_tag() == "two");
+        assert!(changed_tree.get_child_at(0).get_tag() == "three");
+    }
+
+    #[test]
+    fn relative_to_works_when_change_is_larger_tree_and_tagged_sibling() {
+        // Change the child of .1 to have the subtree one -> two -> three (ie, we get a tree .1.0.0.0)
+        let original_change = TreeChange::new(&(0, "root").to_tree_address(), TreeChangeType::Sibling, Some(&tree!("one", tree!("two", tree!("three", "four"), "five"))));
+
+        // .1.0.0 should represent the 'two' change
+        let relative_change = original_change.relative_to(&("one", "two").to_tree_address()).unwrap();
+
+        // 'three', the first child of the 'two' node
+        assert!(relative_change.applies_to(&0.to_tree_address(), &TreeExtent::SubTree).unwrap());
+
+        // 'five', the second child
+        assert!(relative_change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
+
+        // Should be able to apply to the empty tree
+        let empty_tree      = tree!("empty", "");
+        let changed_tree    = relative_change.apply(&empty_tree);
+
+        assert!(changed_tree.get_tag() == "two");
+        assert!(changed_tree.get_child_at(0).get_tag() == "three");
     }
 }
