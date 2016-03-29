@@ -208,6 +208,30 @@ impl TreeAddress {
             }
         }
     }
+
+    ///
+    /// Returns the last part of the address (before the final `Here`)
+    ///
+    pub fn last_part(&self) -> &TreeAddress {
+        let mut last_part = self;
+        let mut next_part = self;
+
+        loop {
+            match next_part {
+                &TreeAddress::Here => return last_part,
+
+                &TreeAddress::ChildAtIndex(_, ref next_address) => {
+                    last_part = next_part;
+                    next_part = next_address;
+                },
+
+                &TreeAddress::ChildWithTag(_, ref next_address) => {
+                    last_part = next_part;
+                    next_part = next_address;
+                }
+            }
+        }
+    }
 }
 
 impl fmt::Display for TreeAddress {
@@ -517,5 +541,14 @@ mod treeaddress_test {
     #[test]
     fn get_parent_here() {
         assert!(TreeAddress::Here.parent() == TreeAddress::Here);
+    }
+
+    #[test]
+    fn get_last_part() {
+        let address         = (0, (1, 2)).to_tree_address();
+        let last_part       = address.last_part();
+        let expected_last   = 2.to_tree_address();
+
+        assert!(*last_part == expected_last);
     }
 }
