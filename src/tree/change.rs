@@ -612,7 +612,7 @@ mod change_tests {
         // Change the child of .1 to have the subtree one -> two -> three (ie, we get a tree .1.0.0.0)
         let original_change = TreeChange::new(&(0, 1), TreeChangeType::Sibling, Some(&tree!("one", tree!("two", tree!("three", "four"), "five"))));
 
-        // .1.0.0 should represent the 'two' change
+        // .1. should represent the top of the tree, so .2. will be the 'one' node
         let relative_change = original_change.relative_to(&(2, 0).to_tree_address()).unwrap();
 
         // 'three', the first child of the 'two' node
@@ -656,7 +656,11 @@ mod change_tests {
         // Change the child of .1 to have the subtree one -> two -> three (ie, we get a tree .1.0.0.0)
         let original_change = TreeChange::new(&(0, "root"), TreeChangeType::Sibling, Some(&tree!("one", tree!("two", tree!("three", "four"), "five"))));
 
-        // .one.two should represent the 'two' change
+        // .one. will represent the sibling of .root. after the change
+        // There's a gotcha with this: the change has no way to know if .root. occurs after another .one. (as tagged addresses don't 
+        // have to be unique). If it's after another .one. then the relative change will be referring to the 'wrong' part of the tree.
+        // TODO: we could fix this by specifying that tagged changes like this remove any preceding tags with identical values (ie,
+        // ensure that the change we report here becomes accurate after the fact)
         let relative_change = original_change.relative_to(&("one", "two").to_tree_address()).unwrap();
 
         // 'three', the first child of the 'two' node
