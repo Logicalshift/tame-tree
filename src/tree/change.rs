@@ -261,23 +261,32 @@ impl TreeChange {
     }
 
     ///
+    /// Given an address that matches a parent of the address where this change will take place, returns a new change relative
+    /// to the subtree represented by that address.
+    ///
+    #[inline]
+    fn relative_to_parent(&self, parent_address: &TreeAddress) -> Option<TreeChange> {
+        let relative_root = self.address_relative_to_tree_root();
+
+        // Get the new root relative to the main tree
+        if let Some(new_root) = relative_root.relative_to(parent_address) {
+            // Prepend the '0' needed to deal with the 'imaginary' root
+            let new_root_relative = (0, new_root).to_tree_address();
+
+            Some(TreeChange::new(&new_root_relative, self.change_type, self.replacement_tree.as_ref()))
+        } else {
+            None
+        }
+    }
+
+    ///
     /// Creates a new tree change that's relative to a subtree of the tree this change is for
     ///
     pub fn relative_to(&self, address: &TreeAddress) -> Option<TreeChange> {
         let relative_root = self.address_relative_to_tree_root();
 
         if address.is_parent_of(relative_root).unwrap_or(false) {
-            // Get the new root relative to the main tree
-            let new_root_opt = relative_root.relative_to(address);
-
-            if let Some(new_root) = new_root_opt {
-                // Prepend the '0' needed to deal with the 'imaginary' root
-                let new_root_relative = (0, new_root).to_tree_address();
-
-                Some(TreeChange::new(&new_root_relative, self.change_type, self.replacement_tree.as_ref()))
-            } else {
-                None
-            }
+            self.relative_to_parent(address)
         } else if relative_root.is_parent_of(address).unwrap_or(false) {
             // Get the address of the part of the changed tree that will apply to the new fix
             if let Some(root_relative_to_tree) = address.relative_to(&relative_root) {
