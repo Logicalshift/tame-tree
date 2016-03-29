@@ -24,7 +24,7 @@ use super::basictree::*;
 ///
 /// Represents which of the root's references have changed
 ///
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum TreeChangeType {
     /// The node's child reference has been replaced
     Child,
@@ -319,7 +319,7 @@ impl TreeChange {
 
         if address.is_parent_of(relative_root).unwrap_or(false) {
             self.relative_to_parent(address)
-        } else if relative_root.is_parent_of(address).unwrap_or(false) {
+        } else if self.change_type == TreeChangeType::Child && relative_root.is_parent_of(address).unwrap_or(false) {
             self.relative_to_child(address)
         } else {
             None
