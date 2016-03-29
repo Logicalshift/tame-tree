@@ -343,7 +343,22 @@ impl TreeChange {
                 match relative_to_parent {
                     TreeAddress::ChildAtIndex(index, ref remaining_address) => {
                         // If we create a fake root node, then the child nodes will be offset by the index of the last part of relative_root
-                        None::<TreeChange>
+                        let last_part_of_root = relative_root.last_part();
+
+                        if let &TreeAddress::ChildAtIndex(offset_index, _) = last_part_of_root {
+                            // Generate an offset address
+                            if index > offset_index {
+                                // Relative address is after the modification
+                                let modified_relative_to_parent = TreeAddress::ChildAtIndex(index - offset_index - 1, remaining_address.clone());
+                                self.relative_to_replacement_tree(modified_relative_to_parent)
+                            } else {
+                                // Relative address is before the modification
+                                None
+                            }
+                        } else {
+                            // Last part is not an offset address, so we can't adjust the first part of the relative address
+                            None
+                        }
                     },
 
                     TreeAddress::ChildWithTag(_, _) => {
