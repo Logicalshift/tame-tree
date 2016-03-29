@@ -17,6 +17,7 @@
 ///
 /// Represents the possible values of an attribute on a tree node
 ///
+#[derive(PartialEq, Clone)]
 pub enum TreeValue {
     Nothing,
     Bool(bool),
@@ -108,17 +109,4 @@ impl ToTreeValue for String {
 
 impl ToTreeValue for Vec<u8> {
     fn to_tree_value(&self) -> TreeValue { TreeValue::Data(self.to_owned()) }
-}
-
-impl Clone for TreeValue {
-    fn clone(&self) -> TreeValue {
-        match *self {
-            TreeValue::Nothing          => TreeValue::Nothing,
-            TreeValue::Bool(b)          => TreeValue::Bool(b),
-            TreeValue::Int(v)           => TreeValue::Int(v),
-            TreeValue::Real(f)          => TreeValue::Real(f),
-            TreeValue::String(ref s)    => TreeValue::String(s.to_string()),
-            TreeValue::Data(ref d)      => TreeValue::Data(d.to_vec())
-        }
-    }
 }
