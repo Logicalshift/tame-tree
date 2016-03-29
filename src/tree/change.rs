@@ -283,10 +283,10 @@ impl TreeChange {
             if let Some(root_relative_to_tree) = address.relative_to(relative_root) {
                 if let Some(new_change_tree) = self.replacement_tree.clone().and_then(|tree| { tree.get_child_ref_at(root_relative_to_tree) }) {
                     // Tree is being replaced by a new tree
-                    Some(TreeChange::new(&0, TreeChangeType::Child, Some(&new_change_tree)))
+                    Some(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&new_change_tree)))
                 } else {
                     // Tree is being deleted
-                    Some(TreeChange::new(&0, TreeChangeType::Child, None::<&TreeRef>))
+                    Some(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, None::<&TreeRef>))
                 }
             } else {
                 // Change doesn't affect this tree
