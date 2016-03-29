@@ -264,14 +264,23 @@ impl TreeChange {
     /// Creates a new tree change that's relative to a subtree of the tree this change is for
     ///
     pub fn relative_to(&self, address: &TreeAddress) -> Option<TreeChange> {
-        // Get the new root relative to the main tree
-        let new_root_opt = self.address_relative_to_tree_root().relative_to(address);
+        let relative_root = self.address_relative_to_tree_root();
 
-        if let Some(new_root) = new_root_opt {
-            // Prepend the '0' needed to deal with the 'imaginary' root
-            let new_root_relative = (0, new_root).to_tree_address();
+        if address.is_parent_of(relative_root).unwrap_or(false) {
+            // Get the new root relative to the main tree
+            let new_root_opt = relative_root.relative_to(address);
 
-            Some(TreeChange::new(&new_root_relative, self.change_type, self.replacement_tree.as_ref()))
+            if let Some(new_root) = new_root_opt {
+                // Prepend the '0' needed to deal with the 'imaginary' root
+                let new_root_relative = (0, new_root).to_tree_address();
+
+                Some(TreeChange::new(&new_root_relative, self.change_type, self.replacement_tree.as_ref()))
+            } else {
+                None
+            }
+        } else if relative_root.is_parent_of(address).unwrap_or(false) {
+            unimplemented!();
+            None
         } else {
             None
         }
@@ -573,7 +582,7 @@ mod change_tests {
         // Change the child of .1 to have the subtree one -> two -> three (ie, we get a tree .1.0.0.0)
         let original_change = TreeChange::new(&(0, "root").to_tree_address(), TreeChangeType::Child, Some(&tree!("one", tree!("two", tree!("three", "four"), "five"))));
 
-        // .1.0.0 should represent the 'two' change
+        // .root.one.two should represent the 'two' change
         let relative_change = original_change.relative_to(&("root", ("one", "two")).to_tree_address()).unwrap();
 
         // 'three', the first child of the 'two' node
@@ -595,7 +604,7 @@ mod change_tests {
         // Change the child of .1 to have the subtree one -> two -> three (ie, we get a tree .1.0.0.0)
         let original_change = TreeChange::new(&(0, "root").to_tree_address(), TreeChangeType::Sibling, Some(&tree!("one", tree!("two", tree!("three", "four"), "five"))));
 
-        // .1.0.0 should represent the 'two' change
+        // .one.two should represent the 'two' change
         let relative_change = original_change.relative_to(&("one", "two").to_tree_address()).unwrap();
 
         // 'three', the first child of the 'two' node
