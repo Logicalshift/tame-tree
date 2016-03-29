@@ -279,12 +279,17 @@ impl TreeChange {
                 None
             }
         } else if relative_root.is_parent_of(address).unwrap_or(false) {
-            // When the change applies to a child, the first address that is changed is the child of the root node
-            let first_change = (relative_root.clone(), 0).to_tree_address();
-
             // Get the address of the part of the changed tree that will apply to the new fix
-            if let Some(root_relative_to_tree) = address.relative_to(&first_change) {
-                if let Some(new_change_tree) = self.replacement_tree.clone().and_then(|tree| { tree.get_child_ref_at(root_relative_to_tree) }) {
+            if let Some(root_relative_to_tree) = address.relative_to(&relative_root) {
+                // root_relative_to_tree is the address relative to the node that is having its child replaced. 
+                // The tree itself represents the first child. Make a fake node to represent the node that will be replaced
+                let fake_root_node = Rc::new(BasicTree::new("", ()));
+                if let Some(ref replacement_child) = self.replacement_tree {
+                    fake_root_node.set_child_ref(replacement_child.clone());
+                }
+
+                // Get the new tree relative to the fake tree
+                if let Some(new_change_tree) = fake_root_node.get_child_ref_at(root_relative_to_tree) {
                     // Tree is being replaced by a new tree
                     Some(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&new_change_tree)))
                 } else {
