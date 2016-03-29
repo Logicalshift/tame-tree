@@ -14,6 +14,8 @@
 //   limitations under the License.
 //
 
+use std::fmt;
+
 use super::treenode::*;
 
 ///
@@ -204,6 +206,16 @@ impl TreeAddress {
                     _                   => TreeAddress::ChildWithTag(tag.clone(), Box::new(child.parent()))
                 }
             }
+        }
+    }
+}
+
+impl fmt::Display for TreeAddress {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            TreeAddress::Here                           => write!(f, "."),
+            TreeAddress::ChildAtIndex(index, ref next)  => write!(f, ".{}{}", index, **next),
+            TreeAddress::ChildWithTag(ref index, ref next)  => write!(f, ".\"{}\"{}", index, **next)
         }
     }
 }
