@@ -1,7 +1,8 @@
 [package]
-name = "tame-tree"
+name    = "tame-tree"
 version = "0.1.0"
-authors = ["Andrew Hunter <andrew@logicalshift.io>"]
+license = "Apache"
+authors = ["Andrew Hunter <andrew@logicalshift.co.uk>"]
 
 [dependencies]
 rustc-serialize = "0.3"
