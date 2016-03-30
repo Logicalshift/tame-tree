@@ -48,6 +48,7 @@
 
 extern crate rustc_serialize;
 
+#[macro_use]
 pub mod tree;
 pub mod component;
 mod util;
