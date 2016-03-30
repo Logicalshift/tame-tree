@@ -301,6 +301,12 @@ impl TreeChange {
     /// to the subtree represented by that address.
     ///
     fn relative_to_sibling(&self, sibling_address: &TreeAddress) -> Option<TreeChange> {
+        // If we change the sibling of a node like .1.2, then the replacement tree will have the node .1.3
+        // If want to look up, say, .1.4.2, we need to look up the .2 subtree in the first sibling of the replacement
+        // tree node. To do this, we create a fake tree with its child set to the replacement tree, and look up 
+        // .1.2 in it (calculating the .1 is the main thing we need to do: it's 4-2-1: that is, the index in the
+        // 'real' tree, adjusted to match a tree where the replacement is the only child)
+
         // This change may occur before the address: we're changing a sibling, so we're replacing a part of a tree
         let relative_root = self.address_relative_to_tree_root();
 
