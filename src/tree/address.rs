@@ -140,8 +140,13 @@ impl TreeAddress {
     ///
     pub fn relative_to(&self, parent_address: &TreeAddress) -> Option<TreeAddress> {
         match *self {
-            // Here is a root address, so it doesn't match the parent
-            TreeAddress::Here => None,
+            // Here is a root address, so it doesn't match anything but itself
+            TreeAddress::Here => {
+                match *parent_address {
+                    TreeAddress::Here   => Some(TreeAddress::Here),
+                    _                   => None
+                }
+            },
 
             // Strip out child addresses
             TreeAddress::ChildAtIndex(self_index, ref self_child) => {
