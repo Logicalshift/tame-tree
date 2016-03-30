@@ -48,8 +48,6 @@ impl Consumer for ImmediateConsumer {
         self.subscriptions.add_subscription(ConsumerRegistration { address: address.clone(), extent: extent }, Box::new(move |change| {
             // The change we get from the subscription will have an address relative to the root of the tree
             // Make the subscription change relative to the address that was subscribed to 
-            println!("Calling relative to? {}", address);
-
             change.relative_to(&address).map(|relative_change| { callback(&relative_change) });
         }));
     }
@@ -123,9 +121,6 @@ mod immediate_publisher_tests {
             let new_tree = change.apply(&tree.clone());
             *tree = new_tree;
 
-            println!("root tag is {}", tree.get_tag());
-            println!("add tag is {}", tree.get_child_ref().unwrap().get_tag());
-
             // Tree can have an 'add' node that specifies how much to add to the count for this change
             let old_val     = their_count.get();
             let tree_value  = tree.get_child_ref_at("add").map(|val| { val.get_value().to_int(0) }).unwrap_or(0);
@@ -147,12 +142,12 @@ mod immediate_publisher_tests {
         assert!(our_count.get() == 1);
 
         // Publish an add of 1 to set the count to 1
-        let whole_tree = tree!("root", "some_other_tree", tree!("consumer_target", ("add", 1)));
+        let whole_tree = tree!("root", "some_other_tree", tree!("consumer_target", ("add", 2)));
 
         // Replace the entire tree with the tree above
         let modify_entire_tree = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&whole_tree));
         publisher.publish(modify_entire_tree);
 
-        assert!(our_count.get() == 2);
+        assert!(our_count.get() == 3);
     }
 }

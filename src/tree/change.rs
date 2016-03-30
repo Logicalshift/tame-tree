@@ -376,19 +376,24 @@ impl TreeChange {
     /// Creates a new tree change that's relative to a subtree of the tree this change is for
     ///
     pub fn relative_to(&self, address: &TreeAddress) -> Option<TreeChange> {
-        let relative_root = self.address_relative_to_tree_root();
+        if self.change_type == TreeChangeType::Child && self.root == TreeAddress::Here {
+            // Special case: this change replaces the entire tree
+            self.relative_to_replacement_tree(TreeAddress::ChildAtIndex(0, Box::new(address.clone())))
+        } else { 
+            let relative_root = self.address_relative_to_tree_root();
 
-        if address.is_parent_of(relative_root).unwrap_or(false) {
-            // This change is further down the tree from the address: we can simply change the root address
-            self.relative_to_parent(address)
-        } else if self.change_type == TreeChangeType::Child && relative_root.is_parent_of(address).unwrap_or(false) {
-            // This change occurs before the address: we need to trim the tree to accomodate it
-            self.relative_to_child(address)
-        } else if self.change_type == TreeChangeType::Sibling {
-            self.relative_to_sibling(address)
-        } else {
-            // This change does not affect this address
-            None
+            if address.is_parent_of(relative_root).unwrap_or(false) {
+                // This change is further down the tree from the address: we can simply change the root address
+                self.relative_to_parent(address)
+            } else if self.change_type == TreeChangeType::Child && relative_root.is_parent_of(address).unwrap_or(false) {
+                // This change occurs before the address: we need to trim the tree to accomodate it
+                self.relative_to_child(address)
+            } else if self.change_type == TreeChangeType::Sibling {
+                self.relative_to_sibling(address)
+            } else {
+                // This change does not affect this address
+                None
+            }
         }
     }
 }
