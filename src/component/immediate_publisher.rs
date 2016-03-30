@@ -138,18 +138,20 @@ mod immediate_publisher_tests {
 
         // Publish an add of 1 to set the count to 1
         let just_add = ("add", 1).to_tree_node();
-        println!("Publishing!");
 
         // Change the child of the second child of the root to the 'just_add' tree
-        publisher.publish(TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&just_add)));
+        let modify_child_of_subscribed_tree = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&just_add));
+        assert!(!modify_child_of_subscribed_tree.relative_to(&1.to_tree_address()).is_none());
+        publisher.publish(modify_child_of_subscribed_tree);
 
         assert!(our_count.get() == 1);
 
         // Publish an add of 1 to set the count to 1
-        let add_one = tree!("root", "some_other_tree", tree!("consumer_target", ("add", 1)));
+        let whole_tree = tree!("root", "some_other_tree", tree!("consumer_target", ("add", 1)));
 
         // Replace the entire tree with the tree above
-        publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&add_one)));
+        let modify_entire_tree = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&whole_tree));
+        publisher.publish(modify_entire_tree);
 
         assert!(our_count.get() == 2);
     }
