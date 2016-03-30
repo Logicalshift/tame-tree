@@ -48,6 +48,8 @@ impl Consumer for ImmediateConsumer {
         self.subscriptions.add_subscription(ConsumerRegistration { address: address.clone(), extent: extent }, Box::new(move |change| {
             // The change we get from the subscription will have an address relative to the root of the tree
             // Make the subscription change relative to the address that was subscribed to 
+            println!("Calling relative to? {}", address);
+
             change.relative_to(&address).map(|relative_change| { callback(&relative_change) });
         }));
     }
@@ -106,15 +108,27 @@ mod immediate_publisher_tests {
         let our_count       = Rc::new(Cell::new(0));
         let their_count     = our_count.clone();
 
-        let consumer_tree: RefCell<TreeRef> = RefCell::new(Rc::new(BasicTree::new("empty", ())));
+        let consumer_tree: RefCell<TreeRef> = RefCell::new(Rc::new("empty".to_tree_node()));
+
+        // Subscribe to the second child of the root
+        // Ie, tree should look like this:
+        //
+        // root
+        //   +- Anything
+        //   +- ConsumerTree
+        //        +- add(value)
         consumer.subscribe(1.to_tree_address(), TreeExtent::SubTree, Box::new(move |change| {
+            // Update the tree
             let mut tree = consumer_tree.borrow_mut();
             let new_tree = change.apply(&tree.clone());
             *tree = new_tree;
 
+            println!("root tag is {}", tree.get_tag());
+            println!("add tag is {}", tree.get_child_ref().unwrap().get_tag());
+
             // Tree can have an 'add' node that specifies how much to add to the count for this change
             let old_val     = their_count.get();
-            let tree_value  = consumer_tree.borrow().get_child_ref_at("add").map(|val| { val.get_value().to_int(0) }).unwrap_or(0);
+            let tree_value  = tree.get_child_ref_at("add").map(|val| { val.get_value().to_int(0) }).unwrap_or(0);
 
             their_count.set(old_val + tree_value);
         }));
@@ -123,6 +137,20 @@ mod immediate_publisher_tests {
         assert!(our_count.get() == 0);
 
         // Publish an add of 1 to set the count to 1
-        let add_one = tree!("root", ("add", 1));
+        let just_add = ("add", 1).to_tree_node();
+        println!("Publishing!");
+
+        // Change the child of the second child of the root to the 'just_add' tree
+        publisher.publish(TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&just_add)));
+
+        assert!(our_count.get() == 1);
+
+        // Publish an add of 1 to set the count to 1
+        let add_one = tree!("root", "some_other_tree", tree!("consumer_target", ("add", 1)));
+
+        // Replace the entire tree with the tree above
+        publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&add_one)));
+
+        assert!(our_count.get() == 2);
     }
 }
