@@ -690,7 +690,7 @@ mod change_tests {
     #[test]
     fn relative_to_works_when_change_affects_entire_tree() {
         // Change the child of .1 to have the subtree one -> two -> three (ie, we get a tree .1.0.0.0)
-        let original_change = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&tree!("root", ".0", tree!("one", tree!("two", tree!("three", "four"), "five")))));
+        let original_change = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&tree!("root", ".0", tree!(".1", tree!("one", tree!("two", tree!("three", "four"), "five"))))));
 
         // .1.0.0 should represent the 'two' change
         let relative_change = original_change.relative_to(&(1, (0, 0)).to_tree_address()).unwrap();
