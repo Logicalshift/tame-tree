@@ -652,6 +652,20 @@ mod change_tests {
     }
 
     #[test]
+    fn relative_to_works_on_root_tree() {
+        let original_change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
+        let relative_change = original_change.relative_to(&1.to_tree_address()).unwrap();
+
+        assert!(relative_change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
+        assert!(relative_change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::Children).unwrap());
+        assert!(relative_change.applies_to(&(1, (2, 3)).to_tree_address(), &TreeExtent::ThisNode).unwrap());
+
+        assert!(relative_change.applies_to(&2.to_tree_address(), &TreeExtent::SubTree).unwrap());
+        assert!(relative_change.applies_to(&1.to_tree_address(), &TreeExtent::Children).unwrap());
+        assert!(relative_change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::ThisNode).unwrap());
+    }
+
+    #[test]
     fn relative_to_works_when_change_is_larger_tree() {
         // Change the child of .1 to have the subtree one -> two -> three (ie, we get a tree .1.0.0.0)
         let original_change = TreeChange::new(&(0, 1), TreeChangeType::Child, Some(&tree!("one", tree!("two", tree!("three", "four"), "five"))));
