@@ -19,6 +19,7 @@ use super::address::*;
 ///
 /// An extent represents a series of nodes starting at a specified node
 ///
+#[derive(Clone, Copy, PartialEq)]
 pub enum TreeExtent {
     /// Just the initial node
     ThisNode,
