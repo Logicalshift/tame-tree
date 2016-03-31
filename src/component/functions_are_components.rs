@@ -372,7 +372,27 @@ mod component_function_tests {
         });
 
         // Publish something to our function
-        input_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"test".to_tree_node())));
+        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&"test".to_tree_node())));
+
+        // Check that the output was 'passed'
+        let result = result_reader();
+        assert!(result.get_tag() == "passed")
+    }
+
+    #[test]
+    pub fn can_create_tree_ref_component() {
+        let mut input_publisher = ImmediatePublisher::new();
+        let consumer            = input_publisher.create_consumer();
+
+        let output_publisher    = OutputTreePublisher::new();
+        let result_reader       = output_publisher.get_tree_reader();
+        
+        let _component = to_component(consumer, output_publisher, |new_tree: &TreeRef| {
+            new_tree.clone()
+        });
+
+        // Publish something to our function
+        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&"passed".to_tree_node())));
 
         // Check that the output was 'passed'
         let result = result_reader();
@@ -405,7 +425,7 @@ mod component_function_tests {
         });
 
         // Publish something to our function
-        input_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&InputTree { a: 1, b: 2 }.to_tree_node())));
+        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&InputTree { a: 1, b: 2 }.to_tree_node())));
 
         // Check that the output was 'passed'
         let result = result_reader();
