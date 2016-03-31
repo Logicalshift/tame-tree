@@ -383,7 +383,9 @@ impl TreeChange {
     pub fn relative_to(&self, address: &TreeAddress) -> Option<TreeChange> {
         let relative_root = self.address_relative_to_tree_root();
 
-        if address.is_parent_of(relative_root).unwrap_or(false) {
+        if *address == TreeAddress::Here {
+            Some(TreeChange::new(&self.root, self.change_type, self.replacement_tree.as_ref()))
+        } else if address.is_parent_of(relative_root).unwrap_or(false) {
             // This change is further down the tree from the address: we can simply change the root address
             self.relative_to_parent(address)
         } else if self.change_type == TreeChangeType::Child && relative_root.is_parent_of(address).unwrap_or(false) {
