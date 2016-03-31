@@ -132,8 +132,6 @@ impl ConvertToComponent for Box<FnMut(&TreeRef) -> TreeRef> {
 ///
 /// Makes a function into a variant that can be used with a suitable `into_component()` call.
 ///
-/// Short for 'make component'
-///
 /// For example:
 ///
 /// ```
@@ -143,7 +141,7 @@ impl ConvertToComponent for Box<FnMut(&TreeRef) -> TreeRef> {
 /// # let input_publisher   = ImmediatePublisher::new();
 /// # let consumer          = input_publisher.create_consumer();
 /// # let publisher         = ImmediatePublisher::new();
-/// let component = mk_com(|tree: &TreeRef| { tree.clone() }).into_component(consumer, publisher);
+/// let component = component_fn(|tree: &TreeRef| { tree.clone() }).into_component(consumer, publisher);
 /// ```
 ///
 /// This exists to get around some limitations in rust's type inference.
@@ -172,16 +170,16 @@ impl ConvertToComponent for Box<FnMut(&TreeRef) -> TreeRef> {
 /// Type inference: utterly defeated. (`Box::<Fn blah blah>::new` doesn't work either because it coerces the
 /// closure to the Fn trait too early and thus produces an error)
 ///
-/// To make this less of a nightmare to use, the mk_com function tells rust that a function can be boxed and
+/// To make this less of a nightmare to use, the component_fn function tells rust that a function can be boxed and
 /// helps out by inferring the various parameters.
 ///
 #[inline]
-pub fn mk_com<TIn, TOut, F>(func: F) -> Box<Fn(&TIn) -> TOut> where F: Fn(&TIn) -> TOut + 'static {
+pub fn component_fn<TIn, TOut, F>(func: F) -> Box<Fn(&TIn) -> TOut> where F: Fn(&TIn) -> TOut + 'static {
     Box::new(func)
 }
 
 ///
-/// Version of mk_com that works on `FnMut` functions
+/// Version of component_fn that works on `FnMut` functions
 ///
 /// For example:
 ///
@@ -193,14 +191,14 @@ pub fn mk_com<TIn, TOut, F>(func: F) -> Box<Fn(&TIn) -> TOut> where F: Fn(&TIn) 
 /// # let consumer          = input_publisher.create_consumer();
 /// # let publisher         = ImmediatePublisher::new();
 /// let mut times_run       = 0;
-/// let component = mk_com_mut(move |tree: &TreeRef| { 
+/// let component = component_fn_mut(move |tree: &TreeRef| { 
 ///     times_run = times_run + 1;
 ///     tree.clone() 
 /// }).into_component(consumer, publisher);
 /// ```
 ///
 #[inline]
-pub fn mk_com_mut<TIn, TOut, F>(func: F) -> Box<FnMut(&TIn) -> TOut> where F: FnMut(&TIn) -> TOut + 'static {
+pub fn component_fn_mut<TIn, TOut, F>(func: F) -> Box<FnMut(&TIn) -> TOut> where F: FnMut(&TIn) -> TOut + 'static {
     Box::new(func)
 }
 
@@ -216,14 +214,14 @@ pub fn mk_com_mut<TIn, TOut, F>(func: F) -> Box<FnMut(&TIn) -> TOut> where F: Fn
 /// # let input_publisher   = ImmediatePublisher::new();
 /// # let consumer          = input_publisher.create_consumer();
 /// # let publisher         = ImmediatePublisher::new();
-/// let pass_through_component = component(consumer, publisher, |tree: &TreeRef| { tree.clone() });
+/// let pass_through_component = to_component(consumer, publisher, |tree: &TreeRef| { tree.clone() });
 /// ```
 ///
 #[inline]
-pub fn component<TIn, TOut, F>(consumer: ConsumerRef, publisher: PublisherRef, func: F) -> ComponentRef 
+pub fn to_component<TIn, TOut, F>(consumer: ConsumerRef, publisher: PublisherRef, func: F) -> ComponentRef 
     where   F: Fn(&TIn) -> TOut + 'static, 
             Box<Fn(&TIn) -> TOut> : ConvertToComponent {
-    mk_com(func).into_component(consumer, publisher)
+    component_fn(func).into_component(consumer, publisher)
 }
 
 
@@ -240,17 +238,17 @@ pub fn component<TIn, TOut, F>(consumer: ConsumerRef, publisher: PublisherRef, f
 /// # let consumer          = input_publisher.create_consumer();
 /// # let publisher         = ImmediatePublisher::new();
 /// let mut times_run       = 0;
-/// let pass_through_component = component_mut(consumer, publisher, move |tree: &TreeRef| { 
+/// let pass_through_component = to_component_mut(consumer, publisher, move |tree: &TreeRef| { 
 ///     times_run = times_run + 1; 
 ///     tree.clone() 
 /// });
 /// ```
 ///
 #[inline]
-pub fn component_mut<TIn, TOut, F>(consumer: ConsumerRef, publisher: PublisherRef, func: F) -> ComponentRef 
+pub fn to_component_mut<TIn, TOut, F>(consumer: ConsumerRef, publisher: PublisherRef, func: F) -> ComponentRef 
     where   F: FnMut(&TIn) -> TOut + 'static, 
             Box<FnMut(&TIn) -> TOut> : ConvertToComponent {
-    mk_com_mut(func).into_component(consumer, publisher)
+    component_fn_mut(func).into_component(consumer, publisher)
 }
 
 #[cfg(test)]
@@ -267,7 +265,7 @@ mod component_function_tests {
         let output_publisher    = OutputTreePublisher::new();
         let result_reader       = output_publisher.get_tree_reader();
         
-        let _component = component(consumer, output_publisher, |_change: &TreeChange| {
+        let _component = to_component(consumer, output_publisher, |_change: &TreeChange| {
             TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"passed".to_tree_node())) 
         });
 
