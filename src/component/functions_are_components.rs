@@ -14,6 +14,67 @@
 //   limitations under the License.
 //
 
+//!
+//! # Functions are components
+//!
+//! A component can be considered to be simply a transformation from one tree to another, or alternatively
+//! a routine that reacts to a change in an input tree with a change to the output tree.
+//!
+//! Any function that takes a single parameter representing a type that can be derived from a tree and returns
+//! a value that can be converted into a tree can be used as a component function. The method `component_fn()`
+//! will turn the type into a `ConvertToComponent` object (useful when composing components), and the method
+//! `to_component()` will create a component directly from a function.
+//!
+//! Example:
+//!
+//! ```
+//! # extern crate tametree;
+//! # extern crate rustc_serialize;
+//! # fn main() {
+//! # use tametree::component::*;
+//! # use tametree::component::immediate_publisher::*;
+//! #
+//! # let input_publisher   = ImmediatePublisher::new();
+//! # let consumer          = input_publisher.create_consumer();
+//! # let publisher         = ImmediatePublisher::new();
+//! #[derive(RustcEncodable, RustcDecodable)]
+//! struct InputTree {
+//!     a: i32,
+//!     b: i32,
+//! };
+//! impl EncodeToTreeNode for InputTree { }
+//!
+//! #[derive(RustcEncodable, RustcDecodable)]
+//! struct ResultTree {
+//!     result: i32
+//! };
+//! impl EncodeToTreeNode for ResultTree { }
+//!
+//! let component = to_component(consumer, publisher, |input: &InputTree| { 
+//!    ResultTree { result: input.a + input.b } 
+//! });
+//! # }
+//!
+//! ```
+//!
+//! Alternatively, a component could just respond directly to tree changes:
+//!
+//! ```
+//! # use tametree::component::*;
+//! # use tametree::component::immediate_publisher::*;
+//! #
+//! # let input_publisher   = ImmediatePublisher::new();
+//! # let consumer          = input_publisher.create_consumer();
+//! # let publisher         = ImmediatePublisher::new();
+//! let component = to_component(consumer, publisher, |_change: &TreeChange| { 
+//!    TreeChange::new(&(), TreeChangeType::Child, None::<&TreeRef>)
+//! });
+//! ```
+//!
+//! Responding directly to tree changes is useful when a component doesn't want to keep an entire tree in 
+//! memory: an example of where this is useful is when making a subtree act like a stream.
+//!
+
 use std::rc::*;
 
 use super::component::*;
@@ -126,6 +187,45 @@ impl ConvertToComponent for Box<FnMut(&TreeRef) -> TreeRef> {
         }));
 
         return Rc::new(FunctionComponent);
+    }
+}
+
+impl<TIn: 'static + DecodeFromTreeNode, TOut: 'static + ToTreeNode> ConvertToComponent for Box<FnMut(&TIn) -> TOut> {
+    ///
+    /// Creates a component that consumes from a tree and pub
+    ///
+    fn into_component(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+        let mut our_consumer    = consumer;
+        let mut our_publisher   = publisher;
+        let mut action          = self;
+
+        let mut tree = "empty".to_tree_node();
+
+        our_consumer.subscribe(TreeAddress::Here, TreeExtent::SubTree, Box::new(move |change| {
+            tree = change.apply(&tree);
+
+            // TODO: once we have error handling, deal with decoding failing here
+            let decoded_or_err  = TIn::new_from_tree(&tree);
+            if let Ok(decoded) = decoded_or_err {
+                let new_object  = action(&decoded);
+                let new_tree    = new_object.to_tree_node();
+
+                our_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&new_tree)));
+            }
+        }));
+
+        return Rc::new(FunctionComponent);
+    }
+}
+
+impl<TIn: 'static + DecodeFromTreeNode, TOut: 'static + ToTreeNode> ConvertToComponent for Box<Fn(&TIn) -> TOut> {
+    ///
+    /// Creates a component that consumes from a tree and pub
+    ///
+    fn into_component(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+        let action = self;
+
+        component_fn_mut(move |val| { action(val) }).into_component(consumer, publisher)
     }
 }
 
