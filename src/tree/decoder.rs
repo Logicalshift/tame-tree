@@ -32,7 +32,7 @@ pub enum TreeNodeDecodingError {
     UnsupportedType,
     NodeHasInvalidType,
     ValueOutOfRange,
-    MissingField,
+    MissingField(String),
     GenericError(String)
 }
 
@@ -112,7 +112,7 @@ impl Decoder for TreeNodeDecoder {
         let field = self.current_node.get_child_ref_at(f_name);
 
         match field {
-            None        => Err(TreeNodeDecodingError::MissingField),
+            None        => Err(TreeNodeDecodingError::MissingField(f_name.to_string())),
             Some(ref x) => {
                 // Move into the field node
                 let previous_node = self.current_node.to_owned();
