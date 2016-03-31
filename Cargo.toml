@@ -1,5 +1,5 @@
 [package]
-name    = "tame-tree"
+name    = "tametree"
 version = "0.1.0"
 license = "Apache"
 authors = ["Andrew Hunter <andrew@logicalshift.co.uk>"]
