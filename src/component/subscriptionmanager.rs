@@ -86,6 +86,7 @@ impl<TData: Clone> SubscriptionManager<TData> {
         // Call any subscription matching the filter
         for possible_subscription in subscriptions {
             if call_filter(&possible_subscription.data) {
+                // Caution: this will fail at runtime with a borrowing error if this function is re-entered (ie, if there is a feedback loop)
                 let mut callback = possible_subscription.callback.borrow_mut();
                 callback.run_callback(change);
             }
