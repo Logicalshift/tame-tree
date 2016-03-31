@@ -33,11 +33,11 @@ impl Drop for FunctionComponent {
 /// Simplest form of 'component function': a function that receives a `TreeChange` indicating how the
 /// input tree has changed, and returns a new change indicating how the output has changed.
 ///
-impl BoxedConvertToComponent for Box<Fn(&TreeChange) -> TreeChange> {
+impl ConvertToComponent for Box<Fn(&TreeChange) -> TreeChange> {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///
-    fn into_component_boxed(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+    fn into_component(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
         let mut our_consumer    = consumer;
         let mut our_publisher   = publisher;
         let action              = self;
@@ -57,11 +57,11 @@ impl BoxedConvertToComponent for Box<Fn(&TreeChange) -> TreeChange> {
 ///
 /// This variant allows for mutable state.
 ///
-impl BoxedConvertToComponent for Box<FnMut(&TreeChange) -> TreeChange> {
+impl ConvertToComponent for Box<FnMut(&TreeChange) -> TreeChange> {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///
-    fn into_component_boxed(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+    fn into_component(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
         let mut our_consumer    = consumer;
         let mut our_publisher   = publisher;
         let mut action          = self;
@@ -78,11 +78,11 @@ impl BoxedConvertToComponent for Box<FnMut(&TreeChange) -> TreeChange> {
 ///
 /// Provides a component function that converts an input tree to an output tree
 ///
-impl BoxedConvertToComponent for Box<Fn(&TreeRef) -> TreeRef> {
+impl ConvertToComponent for Box<Fn(&TreeRef) -> TreeRef> {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///
-    fn into_component_boxed(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+    fn into_component(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
         let mut our_consumer    = consumer;
         let mut our_publisher   = publisher;
         let action              = self;
@@ -106,11 +106,11 @@ impl BoxedConvertToComponent for Box<Fn(&TreeRef) -> TreeRef> {
 ///
 /// This variant allows for mutable state
 ///
-impl BoxedConvertToComponent for Box<FnMut(&TreeRef) -> TreeRef> {
+impl ConvertToComponent for Box<FnMut(&TreeRef) -> TreeRef> {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///
-    fn into_component_boxed(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+    fn into_component(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
         let mut our_consumer    = consumer;
         let mut our_publisher   = publisher;
         let mut action          = self;
@@ -129,34 +129,77 @@ impl BoxedConvertToComponent for Box<FnMut(&TreeRef) -> TreeRef> {
     }
 }
 
+///
+/// Makes a function into a variant that can be used with a suitable `into_component()` call.
+///
+/// Short for 'make component'
+///
+/// For example:
+///
+/// ```
+/// # use tametree::component::*;
+/// # use tametree::component::immediate_publisher::*;
+/// #
+/// # let input_publisher   = ImmediatePublisher::new();
+/// # let consumer          = input_publisher.create_consumer();
+/// # let publisher         = ImmediatePublisher::new();
+/// let component = mk_com(|tree: &TreeRef| { tree.clone() }).into_component(consumer, publisher);
+/// ```
+///
+/// This exists to get around some limitations in rust's type inference.
+///
+/// What would be neat is if we could do `(|change: &TreeRef| -> TreeRef { ... }).into_component()`
+/// and have rust figure out that there's an implementation on a `Fn(&TreeRef) -> TreeRef` that we
+/// can use to generate the result. Even `Box::new(...).into_component()` would be OK.
+///
+/// However, closures and Fns are different types and don't get coerced implicitly so that doesn't work.
+/// That is, `Box::new(...).into_component()` will produce an error as the box has the closure type and rust
+/// isn't smart enough to realise there's a cast to `Box<Fn()>`
+///
+/// Here's what you have to do as a result:
+///
+/// ```
+/// # use tametree::component::*;
+/// # use tametree::component::immediate_publisher::*;
+/// #
+/// # let input_publisher   = ImmediatePublisher::new();
+/// # let consumer          = input_publisher.create_consumer();
+/// # let publisher         = ImmediatePublisher::new();
+/// let component_fn: Box<Fn(&TreeRef) -> TreeRef> = Box::new(|tree: &TreeRef| { tree.clone() });
+/// let component = component_fn.into_component(consumer, publisher);
+/// ```
+///
+/// Type inference: utterly defeated. (`Box::<Fn blah blah>::new` doesn't work either because it coerces the
+/// closure to the Fn trait too early and thus produces an error)
+///
+/// To make this less of a nightmare to use, the mk_com function tells rust that a function can be boxed and
+/// helps out by inferring the various parameters.
+///
+#[inline]
+pub fn mk_com<TIn, TOut, F>(func: F) -> Box<Fn(&TIn) -> TOut> where F: Fn(&TIn) -> TOut + 'static {
+    Box::new(func)
+}
+
 #[cfg(test)]
 mod component_function_tests {
     use super::super::super::component::*;
     use super::super::immediate_publisher::*;
     use super::super::output_tree_publisher::*;
 
-    fn make_tree_fn<F: Fn(&TreeChange) -> TreeChange + 'static>(func: F) -> Box<Fn(&TreeChange) -> TreeChange> {
-        Box::new(func)
-    }
-
     #[test]
     pub fn can_create_tree_change_component() {
-        let mut publisher       = ImmediatePublisher::new();
-        let consumer            = publisher.create_consumer();
+        let mut input_publisher = ImmediatePublisher::new();
+        let consumer            = input_publisher.create_consumer();
+
         let output_publisher    = OutputTreePublisher::new();
         let result_reader       = output_publisher.get_tree_reader();
         
-        // TODO: rust isn't smart enough to realise it can coerce a closure into a Fn, so this is awkward
-        // TODO: addtionally let foo: Fn() = | { } is a compilation error just to make things even harder (even though we can use it in a parameter)
-        // Using a helper function here cleans up the code a bit; annoyingly we have to specify the function type in the name
-        let component_fn = make_tree_fn(|_change: &TreeChange| -> TreeChange {
+        let _component = mk_com(|_change: &TreeChange| {
             TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"passed".to_tree_node())) 
-        });
-
-        let _component = component_fn.into_component_boxed(consumer, output_publisher);
+        }).into_component(consumer, output_publisher);
 
         // Publish something to our function
-        publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"test".to_tree_node())));
+        input_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"test".to_tree_node())));
 
         // Check that the output was 'passed'
         let result = result_reader();
