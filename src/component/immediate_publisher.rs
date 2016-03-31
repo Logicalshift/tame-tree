@@ -112,7 +112,7 @@ mod immediate_publisher_tests {
         let our_count       = Rc::new(Cell::new(0));
         let their_count     = our_count.clone();
 
-        let consumer_tree: RefCell<TreeRef> = RefCell::new(Rc::new("empty".to_tree_node()));
+        let mut consumer_tree = "empty".to_tree_node();
 
         // Subscribe to the second child of the root
         // Ie, tree should look like this:
@@ -123,13 +123,11 @@ mod immediate_publisher_tests {
         //        +- add(value)
         consumer.subscribe(1.to_tree_address(), TreeExtent::SubTree, Box::new(move |change| {
             // Update the tree
-            let mut tree = consumer_tree.borrow_mut();
-            let new_tree = change.apply(&tree.clone());
-            *tree = new_tree;
+            consumer_tree = change.apply(&consumer_tree);
 
             // Tree can have an 'add' node that specifies how much to add to the count for this change
             let old_val     = their_count.get();
-            let tree_value  = tree.get_child_ref_at("add").map(|val| { val.get_value().to_int(0) }).unwrap_or(0);
+            let tree_value  = consumer_tree.get_child_ref_at("add").map(|val| { val.get_value().to_int(0) }).unwrap_or(0);
 
             their_count.set(old_val + tree_value);
         }));
