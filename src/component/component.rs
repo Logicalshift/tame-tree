@@ -35,7 +35,7 @@ pub trait Publisher {
 ///
 /// Type of a consumer callback function
 ///
-pub type ConsumerCallback = Box<Fn(&TreeChange) -> ()>;
+pub type ConsumerCallback = Box<FnMut(&TreeChange) -> ()>;
 
 ///
 /// A consumer subscribes to published changes to a tree

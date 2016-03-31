@@ -15,13 +15,15 @@
 //
 
 use std::rc::*;
+use std::cell::*;
+
 use super::super::util::clonecell::*;
 use super::super::tree::*;
 
 use super::component::*;
 
 struct Subscription<TData: Clone> {
-    callback: ConsumerCallback,
+    callback: RefCell<ConsumerCallback>,
     data: TData
 }
 
@@ -48,7 +50,7 @@ impl<TData: Clone> SubscriptionManager<TData> {
     ///
     pub fn add_subscription(&self, callback_data: TData, callback: ConsumerCallback) {
         // Turn the callback into a reference
-        let new_callback = Rc::new(Subscription { callback: callback, data: callback_data });
+        let new_callback = Rc::new(Subscription { callback: RefCell::new(callback), data: callback_data });
 
         // Retrieve and update the subscriptions
         let mut subscriptions = self.subscriptions.get();
@@ -66,7 +68,7 @@ impl<TData: Clone> SubscriptionManager<TData> {
         // Call any subscription matching the filter
         for possible_subscription in subscriptions {
             if call_filter(&possible_subscription.data) {
-                let callback = &possible_subscription.callback;
+                let mut callback: RefMut<ConsumerCallback> = possible_subscription.callback.borrow_mut();
                 callback(change);
             }
         }

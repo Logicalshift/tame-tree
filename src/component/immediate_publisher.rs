@@ -45,10 +45,16 @@ impl Consumer for ImmediateConsumer {
     /// Calls a function whenever a particular section of the tree has changed
     ///
     fn subscribe(&mut self, address: TreeAddress, extent: TreeExtent, callback: ConsumerCallback) {
+        // Need to persuade rust that it can call the FnMut (assign parameter to a mutable variable)
+        let mut also_callback = callback;
+
         self.subscriptions.add_subscription(ConsumerRegistration { address: address.clone(), extent: extent }, Box::new(move |change| {
             // The change we get from the subscription will have an address relative to the root of the tree
             // Make the subscription change relative to the address that was subscribed to 
-            change.relative_to(&address).map(|relative_change| { callback(&relative_change) });
+            let maybe_relative_change = change.relative_to(&address);
+            if let Some(relative_change) = maybe_relative_change {
+                also_callback(&relative_change);
+            }
         }));
     }
 }
