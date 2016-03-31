@@ -59,7 +59,7 @@ pub trait Component : Drop {
 pub type ComponentRef = Rc<Component>;
 
 ///
-/// Objects that implement this trait can be converted into components.
+/// Types that implement this trait can be converted into components.
 ///
 /// A component is an object that consumes tree changes from a consumer and publishes its output to a publisher.
 ///
