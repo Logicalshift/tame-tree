@@ -181,9 +181,33 @@ pub fn mk_com<TIn, TOut, F>(func: F) -> Box<Fn(&TIn) -> TOut> where F: Fn(&TIn) 
 }
 
 ///
+/// Version of mk_com that works on `FnMut` functions
+///
+/// For example:
+///
+/// ```
+/// # use tametree::component::*;
+/// # use tametree::component::immediate_publisher::*;
+/// #
+/// # let input_publisher   = ImmediatePublisher::new();
+/// # let consumer          = input_publisher.create_consumer();
+/// # let publisher         = ImmediatePublisher::new();
+/// let mut times_run       = 0;
+/// let component = mk_com_mut(move |tree: &TreeRef| { 
+///     times_run = times_run + 1;
+///     tree.clone() 
+/// }).into_component(consumer, publisher);
+/// ```
+///
+#[inline]
+pub fn mk_com_mut<TIn, TOut, F>(func: F) -> Box<FnMut(&TIn) -> TOut> where F: FnMut(&TIn) -> TOut + 'static {
+    Box::new(func)
+}
+
+///
 /// Starts running a function as a component
 ///
-/// # Exmaple
+/// # Example
 ///
 /// ```
 /// # use tametree::component::*;
@@ -202,6 +226,33 @@ pub fn component<TIn, TOut, F>(consumer: ConsumerRef, publisher: PublisherRef, f
     mk_com(func).into_component(consumer, publisher)
 }
 
+
+///
+/// Starts running a mutable function as a component
+///
+/// # Example
+///
+/// ```
+/// # use tametree::component::*;
+/// # use tametree::component::immediate_publisher::*;
+/// #
+/// # let input_publisher   = ImmediatePublisher::new();
+/// # let consumer          = input_publisher.create_consumer();
+/// # let publisher         = ImmediatePublisher::new();
+/// let mut times_run       = 0;
+/// let pass_through_component = component_mut(consumer, publisher, move |tree: &TreeRef| { 
+///     times_run = times_run + 1; 
+///     tree.clone() 
+/// });
+/// ```
+///
+#[inline]
+pub fn component_mut<TIn, TOut, F>(consumer: ConsumerRef, publisher: PublisherRef, func: F) -> ComponentRef 
+    where   F: FnMut(&TIn) -> TOut + 'static, 
+            Box<FnMut(&TIn) -> TOut> : ConvertToComponent {
+    mk_com_mut(func).into_component(consumer, publisher)
+}
+
 #[cfg(test)]
 mod component_function_tests {
     use super::super::super::component::*;
@@ -216,7 +267,7 @@ mod component_function_tests {
         let output_publisher    = OutputTreePublisher::new();
         let result_reader       = output_publisher.get_tree_reader();
         
-        let _component = component(|_change: &TreeChange| {
+        let _component = component(consumer, output_publisher, |_change: &TreeChange| {
             TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"passed".to_tree_node())) 
         });
 
