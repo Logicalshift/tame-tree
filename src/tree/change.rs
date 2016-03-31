@@ -475,6 +475,18 @@ mod change_tests {
     }
 
     #[test]
+    fn can_replace_entire_tree_when_empty() {
+        // The change is relative to an imaginary root, so replacing the child of . should replace the entire tree
+        let initial_tree    = "empty".to_tree_node();
+        let change_all      = TreeChange::new(&(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let changed_tree    = change_all.apply(&initial_tree);
+
+        assert!(changed_tree.get_child_ref().is_none());
+        assert!(changed_tree.get_sibling_ref().is_none());
+        assert!(changed_tree.get_value().to_int(0) == 4);
+    }
+
+    #[test]
     fn true_root_applies_to_subtree_everything() {
         // The child of address 0 represents the entire tree
         let change = TreeChange::new(&0.to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
