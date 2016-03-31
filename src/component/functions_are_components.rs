@@ -33,14 +33,14 @@ impl Drop for FunctionComponent {
 /// Simplest form of 'component function': a function that receives a `TreeChange` indicating how the
 /// input tree has changed, and returns a new change indicating how the output has changed.
 ///
-impl<F: Fn(&TreeChange) -> TreeChange> ComponentFactory for F {
+impl ComponentFactory for Box<Fn(&TreeChange) -> TreeChange> {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///
     fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
         let mut our_consumer    = consumer;
         let mut our_publisher   = publisher;
-        let action              = Box::new(self);
+        let action              = self;
 
         our_consumer.subscribe(TreeAddress::Here, TreeExtent::SubTree, Box::new(move |change| {
             let change_result = action(change);
@@ -54,23 +54,23 @@ impl<F: Fn(&TreeChange) -> TreeChange> ComponentFactory for F {
 ///
 /// Function that receives a tree and returns a modified tree
 ///
-impl<F: Fn(&TreeRef) -> TreeRef> ComponentFactory for F {
+impl ComponentFactory for Box<Fn(&TreeRef) -> TreeRef> {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///
     fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
         let mut our_consumer    = consumer;
         let mut our_publisher   = publisher;
-        let action              = Box::new(self);
+        let action              = self;
 
         let mut tree = "empty".to_tree_node();
 
         our_consumer.subscribe(TreeAddress::Here, TreeExtent::SubTree, Box::new(move |change| {
-            tree = change.apply(tree);
+            tree = change.apply(&tree);
 
             let new_tree = action(&tree);
 
-            our_publisher.publish(TreeChange::New(&TreeAddress::Here, TreeChangeType::Child, Some(&new_tree)));
+            our_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&new_tree)));
         }));
 
         return Rc::new(FunctionComponent);
