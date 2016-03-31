@@ -26,3 +26,4 @@ pub mod component;
 pub mod subscriptionmanager;
 pub mod immediate_publisher;
 pub mod functions_are_components;
+pub mod output_tree_publisher;

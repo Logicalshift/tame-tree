@@ -133,6 +133,7 @@ impl BoxedConvertToComponent for Box<FnMut(&TreeRef) -> TreeRef> {
 mod component_function_tests {
     use super::super::super::component::*;
     use super::super::immediate_publisher::*;
+    use super::super::output_tree_publisher::*;
 
     fn make_tree_fn<F: Fn(&TreeChange) -> TreeChange + 'static>(func: F) -> Box<Fn(&TreeChange) -> TreeChange> {
         Box::new(func)
@@ -142,20 +143,23 @@ mod component_function_tests {
     pub fn can_create_tree_change_component() {
         let mut publisher       = ImmediatePublisher::new();
         let consumer            = publisher.create_consumer();
-        let output_publisher    = ImmediatePublisher::new();
+        let output_publisher    = OutputTreePublisher::new();
+        let result_reader       = output_publisher.get_tree_reader();
         
         // TODO: rust isn't smart enough to realise it can coerce a closure into a Fn, so this is awkward
         // TODO: addtionally let foo: Fn() = | { } is a compilation error just to make things even harder (even though we can use it in a parameter)
         // Using a helper function here cleans up the code a bit; annoyingly we have to specify the function type in the name
-        let component_fn = make_tree_fn(|change: &TreeChange| -> TreeChange {
+        let component_fn = make_tree_fn(|_change: &TreeChange| -> TreeChange {
             TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"passed".to_tree_node())) 
         });
 
-        let component = component_fn.into_component_boxed(consumer, output_publisher);
+        let _component = component_fn.into_component_boxed(consumer, output_publisher);
 
         // Publish something to our function
         publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"test".to_tree_node())));
 
-        // TODO: check that the output was 'passed'
+        // Check that the output was 'passed'
+        let result = result_reader();
+        assert!(result.get_tag() == "passed")
     }
 }
