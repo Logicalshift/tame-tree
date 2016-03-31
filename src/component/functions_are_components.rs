@@ -52,7 +52,31 @@ impl BoxedComponentFactory for Box<Fn(&TreeChange) -> TreeChange> {
 }
 
 ///
-/// Provides a component function that 
+/// Simplest form of 'component function': a function that receives a `TreeChange` indicating how the
+/// input tree has changed, and returns a new change indicating how the output has changed.
+///
+/// This variant allows for mutable state.
+///
+impl BoxedComponentFactory for Box<FnMut(&TreeChange) -> TreeChange> {
+    ///
+    /// Creates a component that consumes from a particular tree and publishes to a different tree
+    ///
+    fn create_boxed(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+        let mut our_consumer    = consumer;
+        let mut our_publisher   = publisher;
+        let mut action          = self;
+
+        our_consumer.subscribe(TreeAddress::Here, TreeExtent::SubTree, Box::new(move |change| {
+            let change_result = action(change);
+            our_publisher.publish(change_result);
+        }));
+
+        return Rc::new(FunctionComponent);
+    }
+}
+
+///
+/// Provides a component function that converts an input tree to an output tree
 ///
 impl BoxedComponentFactory for Box<Fn(&TreeRef) -> TreeRef> {
     ///
@@ -62,6 +86,34 @@ impl BoxedComponentFactory for Box<Fn(&TreeRef) -> TreeRef> {
         let mut our_consumer    = consumer;
         let mut our_publisher   = publisher;
         let action              = self;
+
+        let mut tree = "empty".to_tree_node();
+
+        our_consumer.subscribe(TreeAddress::Here, TreeExtent::SubTree, Box::new(move |change| {
+            tree = change.apply(&tree);
+
+            let new_tree = action(&tree);
+
+            our_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&new_tree)));
+        }));
+
+        return Rc::new(FunctionComponent);
+    }
+}
+
+///
+/// Provides a component function that converts an input tree to an output tree
+///
+/// This variant allows for mutable state
+///
+impl BoxedComponentFactory for Box<FnMut(&TreeRef) -> TreeRef> {
+    ///
+    /// Creates a component that consumes from a particular tree and publishes to a different tree
+    ///
+    fn create_boxed(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+        let mut our_consumer    = consumer;
+        let mut our_publisher   = publisher;
+        let mut action          = self;
 
         let mut tree = "empty".to_tree_node();
 
