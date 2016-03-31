@@ -37,7 +37,7 @@ impl FunctionComponent {
 
         our_consumer.subscribe(TreeAddress::Here, TreeExtent::SubTree, Box::new(move |change| {
             let change_result = action(change);
-            //our_publisher.publish(change_result);
+            our_publisher.publish(change_result);
         }));
     }
 }
