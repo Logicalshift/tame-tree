@@ -23,11 +23,29 @@ use super::super::tree::*;
 use super::component::*;
 
 struct Subscription<TData: Clone> {
-    callback: RefCell<ConsumerCallback>,
+    callback: RefCell<SubscriptionCallback>,
     data: TData
 }
 
 type SubscriptionRef<TData> = Rc<Subscription<TData>>;
+
+///
+/// SubscriptionCallback gets around an issue with RefCell.
+///
+/// If we do RefCell<Box<Fn>> we can't do .borrow_mut()() because the borrow checker treats the box as immutable
+/// for reasons that seem counter-intuitive.
+///
+struct SubscriptionCallback {
+    callback: ConsumerCallback
+}
+
+impl SubscriptionCallback {
+    #[inline]
+    fn run_callback(&mut self, change: &TreeChange) {
+        let ref mut callback = self.callback;
+        callback(change);
+    }
+}
 
 ///
 /// The subscription manager is an interior mutable type that can store subscriptions created from consumers.
@@ -50,7 +68,7 @@ impl<TData: Clone> SubscriptionManager<TData> {
     ///
     pub fn add_subscription(&self, callback_data: TData, callback: ConsumerCallback) {
         // Turn the callback into a reference
-        let new_callback = Rc::new(Subscription { callback: RefCell::new(callback), data: callback_data });
+        let new_callback = Rc::new(Subscription { callback: RefCell::new(SubscriptionCallback { callback: callback }), data: callback_data });
 
         // Retrieve and update the subscriptions
         let mut subscriptions = self.subscriptions.get();
@@ -68,8 +86,8 @@ impl<TData: Clone> SubscriptionManager<TData> {
         // Call any subscription matching the filter
         for possible_subscription in subscriptions {
             if call_filter(&possible_subscription.data) {
-                let mut callback: RefMut<ConsumerCallback> = possible_subscription.callback.borrow_mut();
-                callback(change);
+                let mut callback = possible_subscription.callback.borrow_mut();
+                callback.run_callback(change);
             }
         }
     }
