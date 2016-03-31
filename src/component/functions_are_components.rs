@@ -29,7 +29,20 @@ impl Drop for FunctionComponent {
     }
 }
 
-impl ComponentFactory for Fn(&TreeChange) -> TreeChange {
+impl FunctionComponent {
+    fn register<F: Fn(&TreeChange) -> TreeChange + 'static>(&self, consumer: ConsumerRef, publisher: PublisherRef, func: F) {
+        let mut our_consumer    = consumer;
+        let mut our_publisher   = publisher;
+        let mut action          = Box::new(func);
+
+        our_consumer.subscribe(TreeAddress::Here, TreeExtent::SubTree, Box::new(move |change| {
+            let change_result = action(change);
+            //our_publisher.publish(change_result);
+        }));
+    }
+}
+
+impl ComponentFactory for Fn(&TreeChange) -> TreeChange + 'static {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///
