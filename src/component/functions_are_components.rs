@@ -37,7 +37,7 @@ impl BoxedComponentFactory for Box<Fn(&TreeChange) -> TreeChange> {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///
-    fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+    fn create_boxed(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
         let mut our_consumer    = consumer;
         let mut our_publisher   = publisher;
         let action              = self;
@@ -58,7 +58,7 @@ impl BoxedComponentFactory for Box<Fn(&TreeRef) -> TreeRef> {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///
-    fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+    fn create_boxed(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
         let mut our_consumer    = consumer;
         let mut our_publisher   = publisher;
         let action              = self;

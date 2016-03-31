@@ -92,17 +92,17 @@ pub trait ComponentFactory {
 /// and have it be possible to use Fn(Foo) directly as a component factory.
 ///
 pub trait BoxedComponentFactory {
-    fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef;
+    fn create_boxed(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef;
 }
 
 impl<F> ComponentFactory for F where F: 'static, Box<F> : BoxedComponentFactory {
     fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
-        Box::new(self).create(consumer, publisher)
+        Box::new(self).create_boxed(consumer, publisher)
     }
 }
 
 impl<F> ComponentFactory for F where F:'static, Rc<F> : BoxedComponentFactory {
     fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
-        Rc::new(self).create(consumer, publisher)
+        Rc::new(self).create_boxed(consumer, publisher)
     }
 }
