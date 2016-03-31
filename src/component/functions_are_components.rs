@@ -33,7 +33,7 @@ impl Drop for FunctionComponent {
 /// Simplest form of 'component function': a function that receives a `TreeChange` indicating how the
 /// input tree has changed, and returns a new change indicating how the output has changed.
 ///
-impl ComponentFactory for Box<Fn(&TreeChange) -> TreeChange> {
+impl BoxedComponentFactory for Box<Fn(&TreeChange) -> TreeChange> {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///
@@ -52,9 +52,9 @@ impl ComponentFactory for Box<Fn(&TreeChange) -> TreeChange> {
 }
 
 ///
-/// Function that receives a tree and returns a modified tree
+/// Provides a component function that 
 ///
-impl ComponentFactory for Box<Fn(&TreeRef) -> TreeRef> {
+impl BoxedComponentFactory for Box<Fn(&TreeRef) -> TreeRef> {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///

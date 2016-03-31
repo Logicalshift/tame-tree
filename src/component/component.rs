@@ -68,3 +68,41 @@ pub trait ComponentFactory {
     ///
     fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef;
 }
+
+///
+/// Type that lets us avoid exposing boxing operations to the user
+///
+/// Let's say we want to implement a component factory for a function type `Fn(Foo)`. The type `Fn<Foo>` is 
+/// not sized, so we could write this:
+///
+///   `impl<F> ComponentFactory for F where F: Fn(Foo) { ... }`
+///
+/// but this will only work once, because rust's typechecker won't be able to distinguish it from Fn(Bar).
+///
+/// Alternatively, we could implement it like this:
+///
+///   `impl ComponentFactory for Box(Fn(Foo)) { ... }` 
+///
+/// and make the user call `Box::new()` everywhere. That's kind of inconvenient for the user and seems
+/// unnecessary as the factory takes possession of itself in order to build the component. This trait
+/// lets us write this instead:
+///
+///   `impl BoxedComponentFactory for Box(Fn(Foo)) { ... }`
+///
+/// and have it be possible to use Fn(Foo) directly as a component factory.
+///
+pub trait BoxedComponentFactory {
+    fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef;
+}
+
+impl<F> ComponentFactory for F where F: 'static, Box<F> : BoxedComponentFactory {
+    fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+        Box::new(self).create(consumer, publisher)
+    }
+}
+
+impl<F> ComponentFactory for F where F:'static, Rc<F> : BoxedComponentFactory {
+    fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+        Rc::new(self).create(consumer, publisher)
+    }
+}
