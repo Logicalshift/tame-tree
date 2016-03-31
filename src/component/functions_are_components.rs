@@ -353,6 +353,8 @@ pub fn to_component_mut<TIn, TOut, F>(consumer: ConsumerRef, publisher: Publishe
 
 #[cfg(test)]
 mod component_function_tests {
+    use rustc_serialize::*;
+
     use super::super::super::component::*;
     use super::super::immediate_publisher::*;
     use super::super::output_tree_publisher::*;
@@ -375,5 +377,38 @@ mod component_function_tests {
         // Check that the output was 'passed'
         let result = result_reader();
         assert!(result.get_tag() == "passed")
+    }
+
+    #[test]
+    pub fn can_create_encoding_decoding_component() {
+        let mut input_publisher = ImmediatePublisher::new();
+        let consumer            = input_publisher.create_consumer();
+
+        let output_publisher    = OutputTreePublisher::new();
+        let result_reader       = output_publisher.get_tree_reader();
+        
+        #[derive(RustcEncodable, RustcDecodable)]
+        struct InputTree {
+            a: i32,
+            b: i32,
+        };
+        impl EncodeToTreeNode for InputTree { }
+        
+        #[derive(RustcEncodable, RustcDecodable)]
+        struct ResultTree {
+            result: i32
+        };
+        impl EncodeToTreeNode for ResultTree { }
+        
+        let _component = to_component(consumer, output_publisher, |input: &InputTree| {
+            ResultTree { result: input.a + input.b } 
+        });
+
+        // Publish something to our function
+        input_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&InputTree { a: 1, b: 2 }.to_tree_node())));
+
+        // Check that the output was 'passed'
+        let result = result_reader();
+        assert!(result.get_child_ref_at("result").unwrap().get_value().to_int(0) == 3)
     }
 }
