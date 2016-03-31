@@ -180,6 +180,28 @@ pub fn mk_com<TIn, TOut, F>(func: F) -> Box<Fn(&TIn) -> TOut> where F: Fn(&TIn) 
     Box::new(func)
 }
 
+///
+/// Starts running a function as a component
+///
+/// # Exmaple
+///
+/// ```
+/// # use tametree::component::*;
+/// # use tametree::component::immediate_publisher::*;
+/// #
+/// # let input_publisher   = ImmediatePublisher::new();
+/// # let consumer          = input_publisher.create_consumer();
+/// # let publisher         = ImmediatePublisher::new();
+/// let pass_through_component = component(consumer, publisher, |tree: &TreeRef| { tree.clone() });
+/// ```
+///
+#[inline]
+pub fn component<TIn, TOut, F>(consumer: ConsumerRef, publisher: PublisherRef, func: F) -> ComponentRef 
+    where   F: Fn(&TIn) -> TOut + 'static, 
+            Box<Fn(&TIn) -> TOut> : ConvertToComponent {
+    mk_com(func).into_component(consumer, publisher)
+}
+
 #[cfg(test)]
 mod component_function_tests {
     use super::super::super::component::*;
@@ -194,9 +216,9 @@ mod component_function_tests {
         let output_publisher    = OutputTreePublisher::new();
         let result_reader       = output_publisher.get_tree_reader();
         
-        let _component = mk_com(|_change: &TreeChange| {
+        let _component = component(|_change: &TreeChange| {
             TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"passed".to_tree_node())) 
-        }).into_component(consumer, output_publisher);
+        });
 
         // Publish something to our function
         input_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"test".to_tree_node())));
