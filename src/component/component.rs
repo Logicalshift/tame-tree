@@ -59,50 +59,51 @@ pub trait Component : Drop {
 pub type ComponentRef = Rc<Component>;
 
 ///
-/// A component subscribes consumes a tree and publishes a transformed version. Components are built from
-/// a factory.
+/// Objects that implement this trait can be converted into components.
 ///
-pub trait ComponentFactory {
+/// A component is an object that consumes tree changes from a consumer and publishes its output to a publisher.
+///
+pub trait ConvertToComponent {
     ///
-    /// Creates a component that consumes from a particular tree and publishes to a different tree
+    /// Converts this object into a component with a consumer and publisher. The object is consumed by this call.
     ///
-    fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef;
+    fn into_component(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef;
 }
 
 ///
 /// Type that lets us avoid exposing boxing operations to the user
 ///
-/// Let's say we want to implement a component factory for a function type `Fn(Foo)`. The type `Fn<Foo>` is 
+/// Let's say we want to implement a component converter for a function type `Fn(Foo)`. The type `Fn<Foo>` is 
 /// not sized, so we could write this:
 ///
-///   `impl<F> ComponentFactory for F where F: Fn(Foo) { ... }`
+///   `impl<F> ConvertToComponent for F where F: Fn(Foo) { ... }`
 ///
 /// but this will only work once, because rust's typechecker won't be able to distinguish it from Fn(Bar).
 ///
 /// Alternatively, we could implement it like this:
 ///
-///   `impl ComponentFactory for Box(Fn(Foo)) { ... }` 
+///   `impl ConvertToComponent for Box(Fn(Foo)) { ... }` 
 ///
 /// and make the user call `Box::new()` everywhere. That's kind of inconvenient for the user and seems
-/// unnecessary as the factory takes possession of itself in order to build the component. This trait
+/// unnecessary as the converter takes possession of itself in order to build the component. This trait
 /// lets us write this instead:
 ///
-///   `impl BoxedComponentFactory for Box(Fn(Foo)) { ... }`
+///   `impl BoxedConvertToComponent for Box(Fn(Foo)) { ... }`
 ///
-/// and have it be possible to use Fn(Foo) directly as a component factory.
+/// and have it be possible to use Fn(Foo) directly as a component converter.
 ///
-pub trait BoxedComponentFactory {
-    fn create_boxed(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef;
+pub trait BoxedConvertToComponent {
+    fn into_component_boxed(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef;
 }
 
-impl<F> ComponentFactory for F where F: 'static, Box<F> : BoxedComponentFactory {
-    fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
-        Box::new(self).create_boxed(consumer, publisher)
+impl<F> ConvertToComponent for F where F: 'static, Box<F> : BoxedConvertToComponent {
+    fn into_component(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+        Box::new(self).into_component_boxed(consumer, publisher)
     }
 }
 
-impl<F> ComponentFactory for F where F:'static, Rc<F> : BoxedComponentFactory {
-    fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
-        Rc::new(self).create_boxed(consumer, publisher)
+impl<F> ConvertToComponent for F where F:'static, Rc<F> : BoxedConvertToComponent {
+    fn into_component(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
+        Rc::new(self).into_component_boxed(consumer, publisher)
     }
 }
