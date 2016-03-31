@@ -66,5 +66,5 @@ pub trait ComponentFactory {
     ///
     /// Creates a component that consumes from a particular tree and publishes to a different tree
     ///
-    fn create(&self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef;
+    fn create(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef;
 }
