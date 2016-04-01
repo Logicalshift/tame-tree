@@ -57,6 +57,7 @@ pub trait TreeNode {
     ///
     /// Creates a copy of this node with a specific child node
     ///
+    #[inline]
     fn with_child_node(&self, new_child: Option<&TreeRef>) -> TreeRef {
         self.with_references(new_child, self.get_sibling_ref().as_ref())
     }
@@ -64,6 +65,7 @@ pub trait TreeNode {
     ///
     /// Creates a copy of this node with a specific sibling node
     ///
+    #[inline]
     fn with_sibling_node(&self, new_sibling: Option<&TreeRef>) -> TreeRef {
         self.with_references(self.get_child_ref().as_ref(), new_sibling)
     }
@@ -170,6 +172,7 @@ impl TreeNode for TreeRef {
     ///
     /// Retrieves a reference to the child of this tree node (or None if this node has no child)
     ///
+    #[inline]
     fn get_child_ref(&self) -> Option<TreeRef> {
         (**self).get_child_ref()
     }
@@ -177,6 +180,7 @@ impl TreeNode for TreeRef {
     ///
     /// Retrieves a reference to the sibling of this tree node (or None if this node has no sibling)
     ///
+    #[inline]
     fn get_sibling_ref(&self) -> Option<TreeRef> {
         (**self).get_sibling_ref()
     }
@@ -184,6 +188,7 @@ impl TreeNode for TreeRef {
     ///
     /// Retrieves the tag attached to this tree node
     ///
+    #[inline]
     fn get_tag(&self) -> &str {
         (**self).get_tag()
     }
@@ -191,6 +196,7 @@ impl TreeNode for TreeRef {
     ///
     /// Retrieves the value attached to this node
     ///
+    #[inline]
     fn get_value(&self) -> &TreeValue {
         (**self).get_value()
     }
@@ -198,6 +204,7 @@ impl TreeNode for TreeRef {
     ///
     /// Creates a copy of this node with different references
     ///
+    #[inline]
     fn with_references(&self, new_child: Option<&TreeRef>, new_sibling: Option<&TreeRef>) -> TreeRef {
         (**self).with_references(new_child, new_sibling)
     }
@@ -205,6 +212,7 @@ impl TreeNode for TreeRef {
     ///
     /// Creates a copy of this node with a specific child node
     ///
+    #[inline]
     fn with_child_node(&self, new_child: Option<&TreeRef>) -> TreeRef {
         (**self).with_child_node(new_child)
     }
@@ -212,6 +220,7 @@ impl TreeNode for TreeRef {
     ///
     /// Creates a copy of this node with a specific sibling node
     ///
+    #[inline]
     fn with_sibling_node(&self, new_sibling: Option<&TreeRef>) -> TreeRef {
         (**self).with_sibling_node(new_sibling)
     }
@@ -219,6 +228,7 @@ impl TreeNode for TreeRef {
     ///
     /// Creates a copy of this node with a specific set of child nodes
     ///
+    #[inline]
     fn with_children(&self, new_children: &Vec<TreeRef>) -> TreeRef {
         (**self).with_children(new_children)
     }
@@ -226,6 +236,7 @@ impl TreeNode for TreeRef {
     ///
     /// Looks up the child at the specified index
     ///
+    #[inline]
     fn lookup_child_at_index(&self, index: usize) -> Option<TreeRef> {
         (**self).lookup_child_at_index(index)
     }
@@ -233,6 +244,7 @@ impl TreeNode for TreeRef {
     ///
     /// Looks up the child at the specified index
     ///
+    #[inline]
     fn lookup_child_with_tag(&self, tag: &str) -> Option<TreeRef> {
         (**self).lookup_child_with_tag(tag)
     }
