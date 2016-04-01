@@ -21,7 +21,6 @@ pub use self::processor::*;
 pub use self::component::*;
 pub use self::functions_are_components::*;
 
-pub mod processor;
 pub mod component;
 pub mod subscriptionmanager;
 pub mod immediate_publisher;
