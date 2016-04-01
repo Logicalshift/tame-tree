@@ -17,12 +17,13 @@
 //! # Software components that communicate using trees
 
 pub use super::tree::*;
-pub use self::processor::*;
 pub use self::component::*;
 pub use self::functions_are_components::*;
+pub use self::components_are_functions::*;
 
 pub mod component;
 pub mod subscriptionmanager;
 pub mod immediate_publisher;
 pub mod functions_are_components;
 pub mod output_tree_publisher;
+pub mod components_are_functions;
