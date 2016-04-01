@@ -152,10 +152,7 @@ mod treenode_index_tests {
 
     #[test]
     fn lookup_usize() {
-        let tree = Rc::new(BasicTree::new("test", ()));
-        let first_child = Rc::new(BasicTree::new("first_child", ()));
-
-        tree.set_child_ref(first_child);
+        let tree = Rc::new(BasicTree::new("test", (), Some("first_child".to_tree_node()), None));
 
         let tree_ref: TreeRef = tree.to_owned();
         let lookup = 0.lookup_index(&tree_ref);
@@ -166,10 +163,7 @@ mod treenode_index_tests {
 
     #[test]
     fn can_get_first_child() {
-        let tree = Rc::new(BasicTree::new("test", ()));
-        let first_child = Rc::new(BasicTree::new("first_child", ()));
-
-        tree.set_child_ref(first_child);
+        let tree = Rc::new(BasicTree::new("test", (), Some("first_child".to_tree_node()), None));
 
         assert!((tree.get_child_at(0).get_tag()) == "first_child");
         assert!(tree.get_sibling_ref().is_none());
@@ -177,10 +171,7 @@ mod treenode_index_tests {
 
     #[test]
     fn can_get_first_child_by_string() {
-        let tree = Rc::new(BasicTree::new("test", ()));
-        let first_child = Rc::new(BasicTree::new("first_child", ()));
-
-        tree.set_child_ref(first_child);
+        let tree = Rc::new(BasicTree::new("test", (), Some("first_child".to_tree_node()), None));
 
         assert!((tree.get_child_at("first_child").get_tag()) == "first_child");
         assert!(tree.get_sibling_ref().is_none());

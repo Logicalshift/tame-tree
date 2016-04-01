@@ -16,7 +16,6 @@
 
 use super::treenode::*;
 use super::values::*;
-use super::super::util::clonecell::*;
 use std::rc::*;
 
 ///
@@ -26,16 +25,16 @@ pub struct BasicTree {
     tag: String,
     value: TreeValue,
 
-    child: CloneCell<Option<TreeRef>>,
-    sibling: CloneCell<Option<TreeRef>>
+    child: Option<TreeRef>,
+    sibling: Option<TreeRef>
 }
 
 impl BasicTree {
     ///
     /// Creates a new tree node with a particular tag and no siblings
     ///
-    pub fn new<TValue: ToTreeValue>(tag: &str, value: TValue) -> BasicTree {
-        BasicTree { tag: tag.to_string(), value: value.to_tree_value(), child: CloneCell::new(None), sibling: CloneCell::new(None) }
+    pub fn new<TValue: ToTreeValue>(tag: &str, value: TValue, child: Option<TreeRef>, sibling: Option<TreeRef>) -> BasicTree {
+        BasicTree { tag: tag.to_string(), value: value.to_tree_value(), child: child, sibling: sibling }
     }
 
     ///
@@ -49,8 +48,22 @@ impl BasicTree {
         BasicTree { 
             tag:        as_tree_node.get_tag().to_owned(), 
             value:      as_tree_node.get_value().to_owned(), 
-            child:      CloneCell::new(child),
-            sibling:    CloneCell::new(sibling)
+            child:      child,
+            sibling:    sibling
+        }
+    }
+
+    ///
+    /// Copies a node into a new basic node and replaces the references
+    ///
+    pub fn from_with_references<TNode: ToTreeNode>(node: TNode, new_child: Option<&TreeRef>, new_sibling: Option<&TreeRef>) -> BasicTree {
+        let as_tree_node    = node.to_tree_node();
+
+        BasicTree { 
+            tag:        as_tree_node.get_tag().to_owned(), 
+            value:      as_tree_node.get_value().to_owned(), 
+            child:      new_child.map(|x| { x.clone() }),
+            sibling:    new_sibling.map(|x| { x.clone() })
         }
     }
 
@@ -64,8 +77,8 @@ impl BasicTree {
         BasicTree { 
             tag:        as_tree_node.get_tag().to_owned(), 
             value:      as_tree_node.get_value().to_owned(), 
-            child:      CloneCell::new(Some(new_child)),
-            sibling:    CloneCell::new(sibling)
+            child:      Some(new_child),
+            sibling:    sibling
         }
     }
 
@@ -79,8 +92,8 @@ impl BasicTree {
         BasicTree { 
             tag:        as_tree_node.get_tag().to_owned(), 
             value:      as_tree_node.get_value().to_owned(), 
-            child:      CloneCell::new(child),
-            sibling:    CloneCell::new(Some(new_sibling))
+            child:      child,
+            sibling:    Some(new_sibling)
         }
     }
 }
@@ -90,14 +103,14 @@ impl TreeNode for BasicTree {
     /// Retrieves a reference to the child of this tree node (or None if this node has no child)
     ///
     fn get_child_ref(&self) -> Option<TreeRef> {
-        self.child.get()
+        self.child.clone()
     }
 
     ///
     /// Retrieves a reference to the sibling of this tree node (or None if this node has no sibling)
     ///
     fn get_sibling_ref(&self) -> Option<TreeRef> {
-        self.sibling.get()
+        self.sibling.clone()
     }
 
     ///
@@ -113,49 +126,13 @@ impl TreeNode for BasicTree {
     fn get_value(&self) -> &TreeValue {
         &self.value
     }
-}
-
-impl MutableTreeNode for BasicTree {
-    ///
-    /// Sets the child for this tree node
-    ///
-    fn set_child_ref(&self, new_node: TreeRef) {
-        self.child.set(Some(new_node));
-    }
 
     ///
-    /// Sets the sibling for this tree node
+    /// Creates a copy of this node with different references
     ///
-    fn set_sibling_ref(&self, new_node: TreeRef) {
-        self.sibling.set(Some(new_node));
-    }
-
-    ///
-    /// Unsets the child for this node
-    ///
-    fn clear_child(&self) {
-        self.child.set(None);
-    }
-
-    ///
-    /// Unsets the sibling for this node
-    ///
-    fn clear_sibling(&self) {
-        self.sibling.set(None);
-    }
-
-    ///
-    /// Changes the value set for this node.
-    ///
-    fn set_tree_value(&mut self, new_value: TreeValue) {
-        self.value = new_value;
-    }
-
-    ///
-    /// Changes the tag attached to this tree
-    ///
-    fn set_tag(&mut self, new_tag: &str) {
-        self.tag = new_tag.to_string();
+    #[inline]
+    fn with_references(&self, new_child: Option<&TreeRef>, new_sibling: Option<&TreeRef>) -> TreeRef {
+        Rc::new(BasicTree::new(&*self.tag, self.value.clone(), new_child.map(|x| { x.clone() }), new_sibling.map(|x| { x.clone() })))
     }
 }
 
@@ -171,27 +148,25 @@ impl Clone for BasicTree {
 
 impl<'a> ToTreeNode for &'a str {
     fn to_tree_node(&self) -> TreeRef {
-        Rc::new(BasicTree::new(self, ()))
+        Rc::new(BasicTree::new(self, (), None, None))
     }
 }
 
 impl<'a, TValue: ToTreeValue> ToTreeNode for (&'a str, TValue) {
     fn to_tree_node(&self) -> TreeRef {
         let (ref tag, ref value) = *self;
-        Rc::new(BasicTree::new(tag, value.to_tree_value()))
+        Rc::new(BasicTree::new(tag, value.to_tree_value(), None, None))
     }
 }
 
 #[cfg(test)]
 mod basictree_tests {
     use super::*;
-    use super::super::values::*;
     use super::super::treenode::*;
-    use std::rc::*;
 
     #[test]
     fn can_create_basictree() {
-        let tree = BasicTree::new("test", ());
+        let tree = BasicTree::new("test", (), None, None);
 
         assert!(tree.get_tag() == "test");
         assert!(tree.get_value().is_nothing());
@@ -201,7 +176,7 @@ mod basictree_tests {
 
     #[test]
     fn value_is_set() {
-        let tree = BasicTree::new("test", 1);
+        let tree = BasicTree::new("test", 1, None, None);
 
         assert!(tree.get_tag() == "test");
         assert!(!tree.get_value().is_nothing());
@@ -209,9 +184,7 @@ mod basictree_tests {
 
     #[test]
     fn can_set_child() {
-        let tree = BasicTree::new("test", ());
-
-        tree.set_child(("child", "childvalue"));
+        let tree = BasicTree::new("test", (), Some(("child", "childvalue").to_tree_node()), None);
 
         assert!(tree.get_child_ref().is_some());
         assert!((tree.get_child_ref().unwrap().get_tag()) == "child");
@@ -220,34 +193,11 @@ mod basictree_tests {
 
     #[test]
     fn can_set_sibling() {
-        let tree = BasicTree::new("test", ());
-        let sibling = Rc::new(BasicTree::new("sibling", ()));
-
-        tree.set_sibling_ref(sibling);
+        let tree = BasicTree::new("test", (), None, Some(("sibling", ()).to_tree_node()));
 
         assert!(tree.get_sibling_ref().is_some());
         assert!((tree.get_sibling_ref().unwrap().get_tag()) == "sibling");
         assert!(tree.get_child_ref().is_none());
-    }
-
-    #[test]
-    fn can_set_tag() {
-        let mut tree = BasicTree::new("test", ());
-
-        tree.set_tag("newtag");
-
-        assert!(tree.get_tag() == "newtag");
-    }
-
-    #[test]
-    fn can_set_value() {
-        let mut tree = BasicTree::new("test", ());
-
-        assert!(tree.get_value().is_nothing());
-
-        tree.set_tree_value(TreeValue::String("Some value".to_string()));
-
-        assert!(match *tree.get_value() { TreeValue::String(ref x) => x == "Some value", _ => false });
     }
 
     #[test]

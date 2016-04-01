@@ -29,7 +29,7 @@ use super::values::*;
 struct TreeNodeEncoder {
     tag:    String,
     value:  TreeValue,
-    child:  Option<Rc<TreeNode>>
+    child:  Option<TreeRef>
 }
 
 impl TreeNodeEncoder {
@@ -40,13 +40,8 @@ impl TreeNodeEncoder {
             child:  None }
     }
 
-    fn to_basic_tree_node(&self) -> BasicTree {
-        let new_node = BasicTree::new(&*self.tag, self.value.to_owned());
-
-        self.child.to_owned().and_then(|child| {
-            new_node.set_child_ref(child);
-            Some(())
-        });
+    fn to_basic_tree_node_with_sibling(&self, new_sibling: Option<TreeRef>) -> BasicTree {
+        let new_node = BasicTree::new(&*self.tag, self.value.to_owned(), self.child.to_owned(), new_sibling);
 
         new_node
     }
@@ -120,12 +115,7 @@ impl Encoder for TreeNodeEncoder {
         }
 
         // Replace the child node with the node generated for the new encoder
-        let new_node = node_encoder.to_basic_tree_node();
-
-        self.child.to_owned().and_then(|sibling| {
-            new_node.set_sibling_ref(sibling);
-            Some(())
-        });
+        let new_node = node_encoder.to_basic_tree_node_with_sibling(self.child.to_owned());
 
         // Save the node we just created and update the tree
         self.child = Some(Rc::new(new_node));
@@ -248,7 +238,7 @@ pub fn encode<T: Encodable>(source: &T) -> Result<Rc<TreeNode>, TreeNodeCodingEr
     let result = source.encode(&mut encoder);
 
     result.map(|_| {
-        let result: Rc<TreeNode> = Rc::new(encoder.to_basic_tree_node());
+        let result: Rc<TreeNode> = Rc::new(encoder.to_basic_tree_node_with_sibling(None));
         result
     })
 }

@@ -63,20 +63,14 @@ impl TreeChange {
     /// Performs a replacement on a basic tree node
     ///
     #[inline]
-    fn perform_replacement(node: &BasicTree, change_type: &TreeChangeType, replacement_tree: &Option<TreeRef>) {
+    fn perform_replacement(node: &TreeRef, change_type: &TreeChangeType, replacement_tree: &Option<TreeRef>) -> TreeRef {
         match *change_type {
             TreeChangeType::Child => {
-                match *replacement_tree {
-                    Some(ref new_child)     => node.set_child_ref(new_child.clone()),
-                    None                    => node.clear_child()
-                }
+                node.with_child_node(replacement_tree.as_ref())
             },
 
             TreeChangeType::Sibling => {
-                match *replacement_tree {
-                    Some(ref new_sibling)   => node.set_sibling_ref(new_sibling.clone()),
-                    None                    => node.clear_child()
-                }
+                node.with_sibling_node(replacement_tree.as_ref())
             }
         }
     }
@@ -87,10 +81,7 @@ impl TreeChange {
     fn perform_apply(original_tree: &TreeRef, address: &TreeAddress, change_type: &TreeChangeType, replacement_tree: &Option<TreeRef>) -> TreeRef {
         match *address {
             TreeAddress::Here => {
-                let new_node = BasicTree::from(original_tree);
-                TreeChange::perform_replacement(&new_node, change_type, replacement_tree);
-
-                Rc::new(new_node)
+                TreeChange::perform_replacement(&original_tree, change_type, replacement_tree)
             },
 
             TreeAddress::ChildAtIndex(child_index, ref child_address) => {
@@ -99,13 +90,13 @@ impl TreeChange {
                 let mut current     = original_tree.get_child_ref();
 
                 for _ in 0..child_index {
-                    siblings.push(current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", ()))));
+                    siblings.push(current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", (), None, None))));
 
                     current = current.and_then(|x| x.get_sibling_ref());
                 }
 
                 // Replace the child matching this item
-                let child_tree  = current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", ())));
+                let child_tree  = current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", (), None, None)));
                 let new_child   = TreeChange::perform_apply(&child_tree, &*child_address, change_type, replacement_tree);
 
                 current = Some(new_child);
@@ -140,7 +131,7 @@ impl TreeChange {
                 }
 
                 // Replace the child matching this item
-                let child_tree  = current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", ())));
+                let child_tree  = current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", (), None, None)));
                 let new_child   = TreeChange::perform_apply(&child_tree, &*child_address, change_type, replacement_tree);
 
                 current = Some(new_child);
@@ -362,10 +353,7 @@ impl TreeChange {
     fn relative_to_replacement_tree(&self, tree_address: TreeAddress) -> Option<TreeChange> {
         // root_relative_to_tree is the address relative to the node that is having its child replaced. 
         // The tree itself represents the first child. Make a fake node to represent the node that will be replaced
-        let fake_root_node = Rc::new(BasicTree::new("", ()));
-        if let Some(ref replacement_child) = self.replacement_tree {
-            fake_root_node.set_child_ref(replacement_child.clone());
-        }
+        let fake_root_node = Rc::new(BasicTree::new("", (), self.replacement_tree.clone(), None));
 
         // Get the new tree relative to the fake tree
         if let Some(new_change_tree) = fake_root_node.get_child_ref_at(tree_address) {

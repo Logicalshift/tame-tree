@@ -29,7 +29,6 @@ pub use self::change::*;
 pub mod treenode;
 pub mod values;
 pub mod basictree;
-pub mod treenode_sugar;
 pub mod treenode_index;
 #[macro_use]
 pub mod treenode_builder;
