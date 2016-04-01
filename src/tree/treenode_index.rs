@@ -31,23 +31,9 @@ impl TreeNodeIndex for usize {
     ///
     /// Finds the tree node corresponding to the specified index in the tree
     ///
+    #[inline]
     fn lookup_index(&self, parent_node: &TreeRef) -> Option<TreeRef> {
-        let mut pos = *self;
-        let mut current_child = parent_node.get_child_ref();
-
-        loop {
-            match current_child {
-                None        => return None,
-                Some(child) => {
-                    if pos == 0 { 
-                        return Some(child); 
-                    }
-
-                    pos = pos-1;
-                    current_child = child.get_sibling_ref().to_owned();
-                }
-            }
-        }
+        parent_node.lookup_child_at_index(*self)
     }
 }
 
@@ -57,21 +43,9 @@ impl<'b> TreeNodeIndex for &'b str {
     ///
     /// When searching by tag, we match only the first item that we find.
     ///
+    #[inline]
     fn lookup_index(&self, parent_node: &TreeRef) -> Option<TreeRef> {
-        let mut current_child = parent_node.get_child_ref().to_owned();
-
-        loop {
-            match current_child {
-                None        => return None,
-                Some(child) => {
-                    if child.get_tag() == *self {
-                        return Some(child);
-                    }
-
-                    current_child = child.get_sibling_ref().to_owned();
-                }
-            }
-        }
+        parent_node.lookup_child_with_tag(self)
     }
 }
 

@@ -80,6 +80,39 @@ pub trait TreeNode {
 
         self.with_child_node(new_child.as_ref())
     }
+
+    ///
+    /// Looks up the child at the specified index
+    ///
+    fn lookup_child_at_index(&self, index: usize) -> Option<TreeRef> {
+        let mut result = self.get_child_ref();
+
+        for _ in 0..index {
+            result = result.and_then(|x| { x.get_sibling_ref() });
+        }
+
+        result
+    }
+
+    ///
+    /// Looks up the child at the specified index
+    ///
+    fn lookup_child_with_tag(&self, tag: &str) -> Option<TreeRef> {
+        let mut current = self.get_child_ref();
+
+        loop {
+            match current {
+                None        => { return None; },
+                Some(node) => {
+                    if node.get_tag() == tag {
+                        return Some(node);
+                    } else {
+                        current = node.get_sibling_ref();
+                    }
+                }
+            }
+        }
+    }
 }
 
 ///
@@ -188,5 +221,19 @@ impl TreeNode for TreeRef {
     ///
     fn with_children(&self, new_children: &Vec<TreeRef>) -> TreeRef {
         (**self).with_children(new_children)
+    }
+
+    ///
+    /// Looks up the child at the specified index
+    ///
+    fn lookup_child_at_index(&self, index: usize) -> Option<TreeRef> {
+        (**self).lookup_child_at_index(index)
+    }
+
+    ///
+    /// Looks up the child at the specified index
+    ///
+    fn lookup_child_with_tag(&self, tag: &str) -> Option<TreeRef> {
+        (**self).lookup_child_with_tag(tag)
     }
 }
