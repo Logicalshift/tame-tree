@@ -104,12 +104,12 @@ impl TreeChange {
                 // Pop siblings to generate the new child item
                 while let Some(sibling) = siblings.pop() {
                     match current {
-                        Some(next_sibling)  => current = Some(Rc::new(BasicTree::from_with_sibling(sibling, next_sibling))),
+                        Some(next_sibling)  => current = Some(sibling.with_sibling_node(Some(&next_sibling))),
                         None                => current = Some(sibling),
                     }
                 }
 
-                Rc::new(BasicTree::from_with_child(original_tree, current.unwrap()))
+                original_tree.with_child_node(current.as_ref())
             },
 
             TreeAddress::ChildWithTag(ref child_tag, ref child_address) => {
@@ -139,12 +139,12 @@ impl TreeChange {
                 // Pop siblings to generate the new child item
                 while let Some(sibling) = siblings.pop() {
                     match current {
-                        Some(next_sibling)  => current = Some(Rc::new(BasicTree::from_with_sibling(sibling, next_sibling))),
+                        Some(next_sibling)  => current = Some(sibling.with_sibling_node(Some(&next_sibling))),
                         None                => current = Some(sibling),
                     }
                 }
 
-                Rc::new(BasicTree::from_with_child(original_tree, current.unwrap()))
+                original_tree.with_child_node(current.as_ref())
             }
         }
     }
