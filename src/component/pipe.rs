@@ -21,48 +21,60 @@
 //! connect the output of one component to the input of another. The tuple type `Pipe` is used
 //! to represent the pipe between two components. For example:
 //!
-//! ```ignore
-//! Pipe(first, second).into_component(consumer, publisher)
+//! ```
+//! # use tametree::component::*;
+//! let add_one = component_fn(|x: &i32| { x+1 });
+//! let add_two = component_fn(|x: &i32| { x+2 });
+//! 
+//! let add_three = Pipe(add_one, add_two);
+//! # 
+//! # let mut endpoint = ComponentEndPoint::<i32, i32>::new(add_three);
+//! # endpoint.send(1);
+//! # assert!(endpoint.recv().unwrap() == 4);
 //! ```
 //!
+//! This pipe can be used as a component:
+//!
+//! ```
+//! # use tametree::component::*;
+//! # let add_one = component_fn(|x: &i32| { x+1 });
+//! # let add_two = component_fn(|x: &i32| { x+2 });
+//! # 
+//! # let add_three = Pipe(add_one, add_two);
+//! #
+//! let mut endpoint = ComponentEndPoint::<i32, i32>::new(add_three);
+//! endpoint.send(1);
+//! assert!(endpoint.recv().unwrap() == 4);
+//! ```
+//!
+//!
 
-use super::super::tree::*;
+use std::rc::*;
+
 use super::component::*;
+use super::immediate_publisher::*;
 
-///
-/// Trait implemented by types that represent a pipe
-///
-pub trait ToPipe {
-    ///
-    /// The type of the output component
-    ///
-    type TOut: ConvertToComponent;
-
-    ///
-    /// Pipes a component into another component
-    ///
-    fn to_pipe(self) -> Self::TOut;
-}
+struct Pipeline(ComponentRef, ComponentRef);
+impl Component for Pipeline { }
+impl Drop for Pipeline { fn drop(&mut self) { } }
 
 ///
 /// A component that takes the output of `TFirst` and connects it to the input of `TSecond`
 ///
-pub struct Pipe<TFirst: ConvertToComponent, TSecond: ConvertToComponent>(TFirst, TSecond);
-
-impl<TFirst: ConvertToComponent, TSecond: ConvertToComponent> ToPipe 
-for Pipe<TFirst, TSecond> {
-    type TOut = Box<Fn(&TreeChange) -> TreeChange>;
-
-    fn to_pipe(self) -> Self::TOut {
-        unimplemented!()
-    }
-}
+pub struct Pipe<TFirst: ConvertToComponent, TSecond: ConvertToComponent>(pub TFirst, pub TSecond);
 
 impl<TFirst: ConvertToComponent, TSecond: ConvertToComponent> ConvertToComponent 
 for Pipe<TFirst, TSecond> {
     #[inline]
     fn into_component(self, consumer: ConsumerRef, publisher: PublisherRef) -> ComponentRef {
-        self.to_pipe().into_component(consumer, publisher)
+        let Pipe(first, second) = self;
+        let pipeline_start      = ImmediatePublisher::new();
+        let pipeline_end        = pipeline_start.create_consumer();
+
+        let first_component     = first.into_component(consumer, pipeline_start);
+        let second_component    = second.into_component(pipeline_end, publisher);
+
+        Rc::new(Pipeline(first_component, second_component))
     }
 }
 
@@ -71,15 +83,8 @@ for Pipe<TFirst, TSecond> {
  * but figuring out how to write the types so we don't get a conflict with the more generic version isn't easy
  *
  * use rustc_serialize::*;
-impl<TIn: 'static + DecodeFromTreeNode, TResult: Decodable + Encodable + EncodeToTreeNode + 'static, TOut: 'static + ToTreeNode> ToPipe 
+impl<TIn: 'static + DecodeFromTreeNode, TResult: Decodable + Encodable + EncodeToTreeNode + 'static, TOut: 'static + ToTreeNode> ConvertToComponent 
 for Pipe<Box<Fn(&TIn) -> TResult>, Box<Fn(&TResult) -> TOut>> {
-    type TOut = Box<Fn(&TIn) -> TOut>;
-
-    fn to_pipe(self) -> Self::TOut {
-        Box::new(move |input| {
-            let intermediate = self.0(input);
-            self.1(&intermediate)
-        })
-    }
+    ...
 }
 */
