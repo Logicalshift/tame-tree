@@ -250,6 +250,11 @@ pub trait EncodeToTreeNode {
     // Empty, this is a marker type
 }
 
+impl EncodeToTreeNode for String {}
+impl EncodeToTreeNode for i32 {}
+impl EncodeToTreeNode for f64 {}
+impl EncodeToTreeNode for Vec<u8> {}
+
 impl<T: Encodable + EncodeToTreeNode> ToTreeNode for T {
     ///
     /// Converts this value into a tree node
