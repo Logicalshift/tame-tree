@@ -25,6 +25,7 @@ pub use self::pipe::*;
 pub mod component;
 pub mod subscriptionmanager;
 pub mod immediate_publisher;
+pub mod bus_publisher;
 pub mod functions_are_components;
 pub mod output_tree_publisher;
 pub mod components_are_functions;
