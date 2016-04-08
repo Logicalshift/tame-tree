@@ -28,10 +28,10 @@
 
 use std::rc::*;
 use std::cell::*;
+use std::mem;
 
 use super::super::tree::*;
 use super::component::*;
-use super::immediate_publisher::*;
 use super::subscriptionmanager::*;
 
 ///
@@ -39,7 +39,8 @@ use super::subscriptionmanager::*;
 ///
 pub struct TreeChangeBus {
     /// Changes that are waiting to be published
-    waiting: Rc<RefCell<WaitingChanges>>,
+    /// (Rc so we can share between publishers, RefCell so we can update, Box so we can swap)
+    waiting: Rc<RefCell<Box<WaitingChanges>>>,
 
     /// Consumers of this publisher
     subscriptions: Rc<SubscriptionManager<ConsumerRegistration>>
@@ -73,7 +74,7 @@ struct BusConsumer {
 ///
 struct BusPublisher {
     /// Changes that are waiting to be published
-    waiting: Rc<RefCell<WaitingChanges>>
+    waiting: Rc<RefCell<Box<WaitingChanges>>>
 }
 
 impl TreeChangeBus {
@@ -82,7 +83,7 @@ impl TreeChangeBus {
     ///
     pub fn new() -> TreeChangeBus {
         TreeChangeBus { 
-            waiting:        Rc::new(RefCell::new(WaitingChanges { waiting: vec![] })),
+            waiting:        Rc::new(RefCell::new(Box::new(WaitingChanges { waiting: vec![] }))),
             subscriptions:  Rc::new(SubscriptionManager::new())
         }
     }
@@ -99,6 +100,42 @@ impl TreeChangeBus {
     ///
     pub fn create_consumer(&self) -> ConsumerRef {
         Box::new(BusConsumer { subscriptions: self.subscriptions.clone() })
+    }
+
+    ///
+    /// Pumps any published messages to the consumer
+    ///
+    pub fn pump(&mut self) {
+        // Create a new list of waiting items and swap it for the active list
+        let to_send = {
+            let mut borrowed_waiting    = self.waiting.borrow_mut();
+            let mut current_value       = Box::new(WaitingChanges { waiting: vec![] });
+
+            mem::swap(&mut *borrowed_waiting, &mut current_value);
+
+            current_value
+        };
+
+        // Publish the items in to_send
+        for change in to_send.waiting {
+            self.subscriptions.call_subscriptions(&|registration| {
+                change.applies_to(&registration.address, &registration.extent).unwrap_or(false)
+            }, &change);
+        }
+    }
+
+    ///
+    /// Pumps published messages to the consumer repeatedly until there are none left to process
+    ///
+    pub fn flush(&mut self) {
+        // Pump published messages until no more are generated
+        loop {
+            if self.waiting.borrow().waiting.len() <= 0 {
+                return;
+            }
+
+            self.pump();
+        }
     }
 }
 
@@ -128,5 +165,62 @@ impl Consumer for BusConsumer {
                 also_callback(&relative_change);
             }
         }));
+    }
+}
+
+#[cfg(test)]
+mod bus_publisher_tests {
+    use super::super::super::component::*;
+    use super::super::output_tree_publisher::*;
+    use super::*;
+
+    #[test]
+    pub fn can_pump_bus() {
+        let mut input_bus           = TreeChangeBus::new();
+        let mut input_publisher     = input_bus.create_publisher();
+        let output_publisher        = OutputTreePublisher::new();
+        let input_consumer          = input_bus.create_consumer();
+        let output_reader           = output_publisher.get_tree_reader();
+        let add_one                 = component_fn(|x: &i32| { x+1 });
+
+        let _add_component          = add_one.into_component(input_consumer, output_publisher);
+
+        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&1.to_tree_node())));
+        input_bus.pump();
+        let output = output_reader();
+        assert!(output.get_value().to_int(0) == 2);
+    }
+
+    #[test]
+    pub fn can_have_feedback() {
+        let mut input_bus           = TreeChangeBus::new();
+        let mut input_publisher     = input_bus.create_publisher();
+        let mut feedback_publisher  = input_bus.create_publisher();
+        let output_publisher        = OutputTreePublisher::new();
+        let input_consumer          = input_bus.create_consumer();
+        let output_reader           = output_publisher.get_tree_reader();
+
+        // Feedback component that sends a message back to itself to reduce the value if it's greater than 0
+        let tend_to_zero            = component_fn_mut(move |x: &i32| { 
+            if *x > 0 {
+                feedback_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&(x-1).to_tree_node())));
+            }
+            *x
+        });
+
+        let _becomes_zero_component = tend_to_zero.into_component(input_consumer, output_publisher);
+
+        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&10.to_tree_node())));
+        input_bus.pump();
+        assert!(output_reader().get_value().to_int(0) == 10);
+
+        input_bus.pump();
+        assert!(output_reader().get_value().to_int(0) == 9);
+
+        input_bus.pump();
+        assert!(output_reader().get_value().to_int(0) == 8);
+
+        input_bus.flush();
+        assert!(output_reader().get_value().to_int(0) == 0);
     }
 }
