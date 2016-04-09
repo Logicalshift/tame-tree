@@ -559,7 +559,7 @@ mod change_tests {
     #[test]
     fn can_apply_simple_change_tagged() {
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
-        let change_two      = TreeChange::new(&("two"), &TreeReplacement::NewNode(("replaced", 4).to_tree_node()));
+        let change_two      = TreeChange::new(&("two"), &("replaced", 4));
         let changed_tree    = change_two.apply(&initial_tree);
 
         assert!(changed_tree.get_child_ref_at("one").unwrap().get_value().to_int(0) == 1);
@@ -572,7 +572,7 @@ mod change_tests {
     #[test]
     fn can_apply_simple_change_indexed() {
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
-        let change_two      = TreeChange::new(&1, &TreeReplacement::NewNode(("replaced", 4).to_tree_node()));
+        let change_two      = TreeChange::new(&1, &("replaced", 4));
         let changed_tree    = change_two.apply(&initial_tree);
 
         assert!(changed_tree.get_child_ref_at(0).unwrap().get_value().to_int(0) == 1);
