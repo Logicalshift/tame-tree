@@ -642,12 +642,11 @@ mod change_tests {
         assert!(!change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::ThisNode).unwrap());
     }
 
-    /*
     #[test]
     fn relative_to_here_does_not_affect_change() {
         // The change is relative to an imaginary root, so replacing the child of . should replace the entire tree
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
-        let change_all      = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&("new_child", 4))).relative_to(&TreeAddress::Here);
+        let change_all      = TreeChange::new(&(), &("new_child", 4)).relative_to(&TreeAddress::Here);
         let changed_tree    = change_all.unwrap().apply(&initial_tree);
 
         assert!(changed_tree.get_child_ref().is_none());
@@ -657,7 +656,7 @@ mod change_tests {
 
     #[test]
     fn relative_to_works_when_change_is_subtree() {
-        let original_change = TreeChange::new(&(0, (3, (4, (1, 2)))).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
+        let original_change = TreeChange::new(&(3, (4, (1, 2))), &());
         let relative_change = original_change.relative_to(&(3, 4).to_tree_address()).unwrap();
 
         assert!(relative_change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
@@ -669,6 +668,7 @@ mod change_tests {
         assert!(!relative_change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::ThisNode).unwrap());
     }
 
+    /*
     #[test]
     fn relative_to_works_on_root_tree() {
         let original_change = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
