@@ -89,5 +89,5 @@ extern crate rustc_serialize;
 
 #[macro_use]
 pub mod tree;
-pub mod component;
+// pub mod component;           // TODO: new tree change
 mod util;
