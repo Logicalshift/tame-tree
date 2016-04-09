@@ -236,7 +236,7 @@ impl TreeChange {
     /// Corresponds to testing for an extent of `TreeExtent::Children`
     ///
     pub fn applies_to_child_of(&self, address: &TreeAddress) -> Option<bool> {
-        self.address.is_parent_of(address)
+        self.address.parent().is_parent_of(address)
     }
 
     ///
@@ -245,7 +245,7 @@ impl TreeChange {
     /// Corresponds to testing for an extent of `TreeExtent::ThisNode`
     ///
     pub fn applies_to_only(&self, address: &TreeAddress) -> Option<bool> {
-        self.address.is_parent_of(&address.parent())
+        self.address.is_parent_of(address)
     }
 
     ///
