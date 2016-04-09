@@ -61,6 +61,16 @@ impl ToTreeReplacement for () {
     }
 }
 
+impl<T: ToTreeNode> ToTreeReplacement for Option<T> {
+    #[inline]
+    fn to_tree_replacement(&self) -> TreeReplacement {
+        match *self {
+            Some(ref tree_node) => TreeReplacement::NewNode(tree_node.to_tree_node()),
+            None                => TreeReplacement::Remove
+        }
+    }
+}
+
 impl ToTreeReplacement for TreeReplacement {
     #[inline]
     fn to_tree_replacement(&self) -> TreeReplacement {
@@ -582,12 +592,11 @@ mod change_tests {
         assert!(changed_tree.get_child_ref_at(3).is_none());
     }
 
-    /*
     #[test]
     fn can_replace_entire_tree() {
         // The change is relative to an imaginary root, so replacing the child of . should replace the entire tree
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
-        let change_all      = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&("new_child", 4)));
+        let change_all      = TreeChange::new(&TreeAddress::Here, &Some(("new_child", 4)));
         let changed_tree    = change_all.apply(&initial_tree);
 
         assert!(changed_tree.get_child_ref().is_none());
@@ -599,7 +608,7 @@ mod change_tests {
     fn can_replace_entire_tree_when_empty() {
         // The change is relative to an imaginary root, so replacing the child of . should replace the entire tree
         let initial_tree    = "empty".to_tree_node();
-        let change_all      = TreeChange::new(&(), TreeChangeType::Child, Some(&("new_child", 4)));
+        let change_all      = TreeChange::new(&(), &Some(("new_child", 4)));
         let changed_tree    = change_all.apply(&initial_tree);
 
         assert!(changed_tree.get_child_ref().is_none());
@@ -607,6 +616,7 @@ mod change_tests {
         assert!(changed_tree.get_value().to_int(0) == 4);
     }
 
+    /*
     #[test]
     fn true_root_applies_to_subtree_everything() {
         // The child of address 0 represents the entire tree
