@@ -59,9 +59,111 @@ impl TreeChange {
     pub fn new<TAddress: ToTreeAddress, TNode: ToTreeNode>(root: &TAddress, replacement: &TreeReplacement) -> TreeChange {
         TreeChange { address: root.to_tree_address(), replacement: replacement.clone() }
     }
+
+    ///
+    /// Returns how a replacement is applied to a particular tree node (or nothing) 
+    ///
+    fn perform_replacement(original: Option<&TreeRef>, replacement: &TreeReplacement) -> Option<TreeRef> {
+        match *replacement {
+            TreeReplacement::Remove                         => None,
+            TreeReplacement::NewNode(ref new_node)          => Some(new_node.clone()),
+            TreeReplacement::NewValue(ref tag, ref value)   => {
+                match original {
+                    None                    => Some(Rc::new(BasicTree::new(&*tag, value, None, None))),
+                    Some(original_ref)      => Some(Rc::new(BasicTree::new(&*tag, value, original_ref.get_child_ref(), original_ref.get_sibling_ref())))
+                }
+            }
+        }
+    }
+
+    ///
+    /// Finds the final sibling of an item and replaces it with a new sibling
+    ///
+    fn replace_sibling(node: &Option<TreeRef>, new_sibling: &Option<TreeRef>) -> Option<TreeRef> {
+        if let Some(ref new_sibling_ref) = *new_sibling {
+            // Push the existing siblings onto a stack
+            let mut siblings    = vec![];
+            let mut current     = match *node { Some(ref tree) => Some(tree.clone()), None => None };
+
+            loop {
+                if let Some(next_sibling) = current {
+                    siblings.push(next_sibling.clone());
+
+                    // Move on
+                    current = next_sibling.get_sibling_ref();
+                } else {
+                    break;
+                }
+            }
+
+            // Pop to generate the final result
+            current = Some(new_sibling_ref.clone());
+
+            while let Some(sibling) = siblings.pop() {
+                current = Some(sibling.with_sibling_node(current.as_ref()));
+            }
+
+            current
+        } else {
+            node.clone()
+        }
+    }
+
+    ///
+    /// Performs the apply operation
+    ///
+    fn perform_apply(original: Option<&TreeRef>, address: &TreeAddress, replacement: &TreeReplacement) -> Option<TreeRef> {
+        match *address {
+            TreeAddress::Here => {
+                // Just replace this node
+                Self::perform_replacement(original, replacement)
+            },
+
+            TreeAddress::ChildAtIndex(child_index, ref child_address) => {
+                // Copy the siblings into a stack
+                let mut siblings    = vec![];
+                let mut current     = original.and_then(|x| x.get_child_ref());
+
+                for _ in 0..child_index {
+                    siblings.push(current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", (), None, None))));
+
+                    current = current.and_then(|x| x.get_sibling_ref());
+                }
+
+                // Replace the child at this index
+                let mut new_child       = Self::perform_apply(current.as_ref(), &*child_address, replacement);
+
+                // Update its sibling to insert it into the existing tree
+                let following_sibling   = current.and_then(|x| x.get_sibling_ref());
+                new_child               = Self::replace_sibling(&new_child, &following_sibling);
+
+                // Pop siblings to generate the new child item
+                current = new_child;
+                while let Some(sibling) = siblings.pop() {
+                    current = Some(sibling.with_sibling_node(current.as_ref()));
+                }
+
+                // Result is the original node with the new child node
+                original.and_then(|x| Some(x.with_child_node(current.as_ref())))
+            },
+
+            TreeAddress::ChildWithTag(ref child_tag, ref child_address) => {
+                unimplemented!();
+            }
+        }
+    }
     
+    ///
+    /// Returns the result of applying this tree change to an existing tree
+    ///
+    #[inline]
     pub fn apply(&self, original_tree: &TreeRef) -> TreeRef {
-        unimplemented!();
+        if let Some(result) = Self::perform_apply(Some(original_tree), &self.address, &self.replacement) {
+            result
+        } else {
+            // If the change is 'delete the root node' then the result will be 'none' - we return an empty tree for that case
+            "".to_tree_node()
+        }
     }
 
     pub fn applies_to_subtree(&self, address: &TreeAddress) -> Option<bool> {
