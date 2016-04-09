@@ -21,6 +21,7 @@ pub use self::component::*;
 pub use self::functions_are_components::*;
 pub use self::components_are_functions::*;
 pub use self::pipe::*;
+pub use self::hub::*;
 
 pub mod component;
 pub mod subscriptionmanager;
@@ -30,3 +31,4 @@ pub mod functions_are_components;
 pub mod output_tree_publisher;
 pub mod components_are_functions;
 pub mod pipe;
+pub mod hub;
