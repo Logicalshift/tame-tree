@@ -38,6 +38,37 @@ pub enum TreeReplacement {
 }
 
 ///
+/// Trait implemented by things that can be converted to a tree replacement
+///
+pub trait ToTreeReplacement {
+    ///
+    /// Creates a representation of this object as a tree replacement
+    ///
+    fn to_tree_replacement(&self) -> TreeReplacement;
+}
+
+impl<T: ToTreeNode> ToTreeReplacement for T {
+    #[inline]
+    fn to_tree_replacement(&self) -> TreeReplacement {
+        TreeReplacement::NewNode(self.to_tree_node())
+    }
+}
+
+impl ToTreeReplacement for () {
+    #[inline]
+    fn to_tree_replacement(&self) -> TreeReplacement {
+        TreeReplacement::Remove
+    }
+}
+
+impl ToTreeReplacement for TreeReplacement {
+    #[inline]
+    fn to_tree_replacement(&self) -> TreeReplacement {
+        self.clone()
+    }
+}
+
+///
 /// A change represents an alteration to the tree
 ///
 pub struct TreeChange {
@@ -56,8 +87,8 @@ impl TreeChange {
     ///
     /// Creates a new tree change
     ///
-    pub fn new<TAddress: ToTreeAddress>(root: &TAddress, replacement: &TreeReplacement) -> TreeChange {
-        TreeChange { address: root.to_tree_address(), replacement: replacement.clone() }
+    pub fn new<TAddress: ToTreeAddress, TReplacement: ToTreeReplacement>(root: &TAddress, replacement: &TReplacement) -> TreeChange {
+        TreeChange { address: root.to_tree_address(), replacement: replacement.to_tree_replacement() }
     }
 
     ///
