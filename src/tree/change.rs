@@ -579,7 +579,7 @@ mod change_tests {
 
     #[test]
     fn relative_to_works_when_change_is_subtree() {
-        let original_change = TreeChange::new(&(3, (4, (1, 2))), &());
+        let original_change = TreeChange::new(&(3, (4, (1, (2, 3)))), &());
         let relative_change = original_change.relative_to(&(3, 4).to_tree_address()).unwrap();
 
         assert!(relative_change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
