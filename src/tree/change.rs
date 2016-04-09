@@ -267,12 +267,36 @@ impl TreeChange {
     /// `relative_to(&1.to_tree_address())` will return a change for `.2.`.
     ///
     pub fn relative_to(&self, address: &TreeAddress) -> Option<TreeChange> {
-        let new_address_opt = self.address.relative_to(address);
+        if address.is_parent_of(&self.address).unwrap_or(false) {
+            // The changes are further down the tree: we can jsut change the root address
+            let new_address_opt = self.address.relative_to(address);
 
-        if let Some(new_address) = new_address_opt {
-            Some(TreeChange::new(&new_address, &self.replacement))
+            if let Some(new_address) = new_address_opt {
+                Some(TreeChange::new(&new_address, &self.replacement))
+            } else {
+                None
+            }
         } else {
-            None
+            // The changes are within the change tree: we need to generate a new tree
+            if let TreeReplacement::NewNode(ref tree) = self.replacement {
+                // Just navigate to this address within the tree
+                let relative_to_tree_maybe = address.relative_to(&self.address);
+
+                if let Some(relative_to_tree) = relative_to_tree_maybe {
+                    let new_tree_maybe = tree.get_child_ref_at(relative_to_tree);
+
+                    if let Some(new_tree) = new_tree_maybe {
+                        Some(TreeChange::new(&TreeAddress::Here, &TreeReplacement::NewNode(new_tree)))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            } else {
+                // Other change types don't create a tree so there is no result
+                None
+            }
         }
     }
 
