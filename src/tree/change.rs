@@ -20,45 +20,72 @@ use super::address::*;
 use super::extent::*;
 use super::treenode::*;
 use super::basictree::*;
+use super::values::*;
 
 ///
-/// Represents which of the root's references have changed
+/// Represents the replacement action to perform on a particular tree node
 ///
-#[derive(Clone, Copy, PartialEq)]
-pub enum TreeChangeType {
-    /// The node's child reference has been replaced
-    Child,
+#[derive(Clone)]
+pub enum TreeReplacement {
+    /// Removes this node
+    Remove,
 
-    /// The node's sibling reference has been replaced
-    Sibling
+    /// Replaces the node with a new node
+    NewNode(TreeRef),
+
+    /// Changes the value of the node but leaves its children intact
+    NewValue(String, TreeValue)
 }
 
 ///
 /// A change represents an alteration to the tree
 ///
 pub struct TreeChange {
-    /// The address of the node matching the root of the change
+    /// The address of the node that should be changed (can be the address of a non-existent child to add a
+    /// new child, or the address of the item after the last sibling to add a new sibling)
+    address: TreeAddress,
+
+    /// The tree that should replace the changed reference.
     ///
-    /// The address is relative to an imaginary node that is the parent of the real root node. This makes it possible to 
-    /// replace the entire tree by setting this to `TreeAddress::Here` and the change_type to `TreeChangeType::Child`.
-    /// The real root node can be addressed at `TreeAddress::ChildAtIndex(0)`
-    root: TreeAddress,
-
-    /// Which of the root's references have changed
-    change_type: TreeChangeType,
-
-    /// The tree that should replace the changed reference. The last node in this tree (depth-first) will be given the same sibling as the last node in the replacement range
-    replacement_tree: Option<TreeRef>
+    /// The node at the specified address will be removed and this node will be added in its place. If this node is
+    /// none, then the node at the address will be removed. If the node has 
+    replacement: TreeReplacement
 }
 
 impl TreeChange {
     ///
     /// Creates a new tree change
     ///
-    pub fn new<TAddress: ToTreeAddress, TNode: ToTreeNode>(root: &TAddress, change_type: TreeChangeType, replacement_tree: Option<&TNode>) -> TreeChange {
-        TreeChange { root: root.to_tree_address(), change_type: change_type, replacement_tree: replacement_tree.map(|x| x.to_tree_node()) }
+    pub fn new<TAddress: ToTreeAddress, TNode: ToTreeNode>(root: &TAddress, replacement: &TreeReplacement) -> TreeChange {
+        TreeChange { address: root.to_tree_address(), replacement: replacement.clone() }
+    }
+    
+    pub fn apply(&self, original_tree: &TreeRef) -> TreeRef {
+        unimplemented!();
     }
 
+    pub fn applies_to_subtree(&self, address: &TreeAddress) -> Option<bool> {
+        unimplemented!();
+    }
+
+    pub fn applies_to_child_of(&self, address: &TreeAddress) -> Option<bool> {
+        unimplemented!();
+    }
+
+    pub fn applies_to_only(&self, address: &TreeAddress) -> Option<bool> {
+        unimplemented!();
+    }
+
+    pub fn applies_to(&self, address: &TreeAddress, extent: &TreeExtent) -> Option<bool> {
+        unimplemented!();
+    }
+
+    pub fn relative_to(&self, address: &TreeAddress) -> Option<TreeChange> {
+        unimplemented!();
+    }
+
+
+    /*
     ///
     /// Performs a replacement on a basic tree node
     ///
@@ -389,8 +416,10 @@ impl TreeChange {
             None
         }
     }
+    */
 }
 
+/*
 #[cfg(test)]
 mod change_tests {
     use super::super::super::tree::*;
@@ -801,3 +830,4 @@ mod change_tests {
         assert!(changed_tree.get_child_at(0).get_tag() == "three");
     }
 }
+*/
