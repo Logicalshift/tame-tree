@@ -56,7 +56,7 @@ impl TreeChange {
     ///
     /// Creates a new tree change
     ///
-    pub fn new<TAddress: ToTreeAddress, TNode: ToTreeNode>(root: &TAddress, replacement: &TreeReplacement) -> TreeChange {
+    pub fn new<TAddress: ToTreeAddress>(root: &TAddress, replacement: &TreeReplacement) -> TreeChange {
         TreeChange { address: root.to_tree_address(), replacement: replacement.clone() }
     }
 
@@ -521,7 +521,6 @@ impl TreeChange {
     */
 }
 
-/*
 #[cfg(test)]
 mod change_tests {
     use super::super::super::tree::*;
@@ -529,29 +528,30 @@ mod change_tests {
     #[test]
     fn can_apply_simple_change_tagged() {
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
-        let change_two      = TreeChange::new(&("test", "one"), TreeChangeType::Sibling, Some(&("replaced", 4)));
+        let change_two      = TreeChange::new(&("two"), &TreeReplacement::NewNode(("replaced", 4).to_tree_node()));
         let changed_tree    = change_two.apply(&initial_tree);
 
         assert!(changed_tree.get_child_ref_at("one").unwrap().get_value().to_int(0) == 1);
         assert!(changed_tree.get_child_ref_at("replaced").unwrap().get_value().to_int(0) == 4);
         assert!(changed_tree.get_child_ref_at("replaced").unwrap().get_sibling_ref().is_none());
         assert!(changed_tree.get_child_ref_at("two").is_none());
-        assert!(changed_tree.get_child_ref_at("three").is_none());
+        assert!(!changed_tree.get_child_ref_at("three").is_none());
     }
 
     #[test]
     fn can_apply_simple_change_indexed() {
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
-        let change_two      = TreeChange::new(&(0, 1), TreeChangeType::Sibling, Some(&("replaced", 4)));
+        let change_two      = TreeChange::new(&1, &TreeReplacement::NewNode(("replaced", 4).to_tree_node()));
         let changed_tree    = change_two.apply(&initial_tree);
 
         assert!(changed_tree.get_child_ref_at(0).unwrap().get_value().to_int(0) == 1);
-        assert!(changed_tree.get_child_ref_at(1).unwrap().get_value().to_int(0) == 2);
-        assert!(changed_tree.get_child_ref_at(2).unwrap().get_value().to_int(0) == 4);
+        assert!(changed_tree.get_child_ref_at(1).unwrap().get_value().to_int(0) == 4);
+        assert!(changed_tree.get_child_ref_at(2).unwrap().get_value().to_int(0) == 3);
         assert!(changed_tree.get_child_ref_at(2).unwrap().get_sibling_ref().is_none());
         assert!(changed_tree.get_child_ref_at(3).is_none());
     }
 
+    /*
     #[test]
     fn can_apply_child_change_tagged() {
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
@@ -931,5 +931,5 @@ mod change_tests {
         assert!(changed_tree.get_tag() == "two");
         assert!(changed_tree.get_child_at(0).get_tag() == "three");
     }
+    */
 }
-*/
