@@ -207,20 +207,56 @@ impl TreeChange {
         }
     }
 
+    ///
+    /// Determines if a change to a particular address will also affect the value of a different address
+    ///
+    #[inline]
+    fn address_applies(changing_address: &TreeAddress, testing_address: &TreeAddress) -> Option<bool> {
+        let is_parent_of_changing = changing_address.is_parent_of(testing_address);
+
+        match is_parent_of_changing {
+            None | Some(false)  => testing_address.is_parent_of(changing_address),
+            _                   => is_parent_of_changing
+        }
+    }
+
+    ///
+    /// Returns whether or not this change covers the specified address (or false if this cannot be determined)
+    ///
+    /// Corresponds to testing for an extent of `TreeExtent::SubTree`
+    ///
     pub fn applies_to_subtree(&self, address: &TreeAddress) -> Option<bool> {
-        unimplemented!();
+        // TODO: if the change type is 'NewValue' then the change only applies if the address is exact
+        Self::address_applies(&self.address, address)
     }
 
+    ///
+    /// Returns whether or not this change affects the child of a paticular address
+    ///
+    /// Corresponds to testing for an extent of `TreeExtent::Children`
+    ///
     pub fn applies_to_child_of(&self, address: &TreeAddress) -> Option<bool> {
-        unimplemented!();
+        self.address.is_parent_of(address)
     }
 
+    ///
+    /// Returns whether or not this change affects only this address
+    ///
+    /// Corresponds to testing for an extent of `TreeExtent::ThisNode`
+    ///
     pub fn applies_to_only(&self, address: &TreeAddress) -> Option<bool> {
-        unimplemented!();
+        self.address.is_parent_of(&address.parent())
     }
 
+    ///
+    /// Returns with or not this change affects a node covered by a given extent relative to an address
+    ///
     pub fn applies_to(&self, address: &TreeAddress, extent: &TreeExtent) -> Option<bool> {
-        unimplemented!();
+        match *extent {
+            TreeExtent::ThisNode    => self.applies_to_only(address),
+            TreeExtent::Children    => self.applies_to_child_of(address),
+            TreeExtent::SubTree     => self.applies_to_subtree(address)
+        }
     }
 
     pub fn relative_to(&self, address: &TreeAddress) -> Option<TreeChange> {
