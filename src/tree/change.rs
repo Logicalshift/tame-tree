@@ -97,6 +97,7 @@ impl TreeChange {
     ///
     /// Creates a new tree change
     ///
+    #[inline]
     pub fn new<TAddress: ToTreeAddress, TReplacement: ToTreeReplacement>(root: &TAddress, replacement: &TReplacement) -> TreeChange {
         TreeChange { address: root.to_tree_address(), replacement: replacement.to_tree_replacement() }
     }
@@ -259,8 +260,20 @@ impl TreeChange {
         }
     }
 
+    ///
+    /// Creates a new tree change that's relative to a subtree of the tree this change is for
+    ///
+    /// Ie, this reduces the scope of the change. If this change is for `.1.2.`, then asking for
+    /// `relative_to(&1.to_tree_address())` will return a change for `.2.`.
+    ///
     pub fn relative_to(&self, address: &TreeAddress) -> Option<TreeChange> {
-        unimplemented!();
+        let new_address_opt = self.address.relative_to(address);
+
+        if let Some(new_address) = new_address_opt {
+            Some(TreeChange::new(&new_address, &self.replacement))
+        } else {
+            None
+        }
     }
 
     /*
