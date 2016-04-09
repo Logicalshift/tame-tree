@@ -584,40 +584,6 @@ mod change_tests {
 
     /*
     #[test]
-    fn can_apply_child_change_tagged() {
-        let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
-        let change_two      = TreeChange::new(&("test", "two").to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
-        let changed_tree    = change_two.apply(&initial_tree);
-
-        assert!(!changed_tree.get_child_ref_at(("two", "new_child").to_tree_address()).is_none());
-
-        assert!(changed_tree.get_child_ref_at(("two", "new_child").to_tree_address()).unwrap().get_value().to_int(0) == 4);
-        assert!(changed_tree.get_child_ref_at(("two", "new_child").to_tree_address()).unwrap().get_sibling_ref().is_none());
-
-        assert!(!changed_tree.get_child_ref_at("one").is_none());
-        assert!(!changed_tree.get_child_ref_at("two").is_none());
-        assert!(!changed_tree.get_child_ref_at("three").is_none());
-        assert!(changed_tree.get_child_ref_at("two").unwrap().get_value().to_int(0) == 2);
-    }
-
-    #[test]
-    fn can_apply_child_change_indexed() {
-        let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
-        let change_two      = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&("new_child", 4)));
-        let changed_tree    = change_two.apply(&initial_tree);
-
-        assert!(!changed_tree.get_child_ref_at((1, 0).to_tree_address()).is_none());
-
-        assert!(changed_tree.get_child_ref_at((1, 0).to_tree_address()).unwrap().get_value().to_int(0) == 4);
-        assert!(changed_tree.get_child_ref_at((1, 0).to_tree_address()).unwrap().get_sibling_ref().is_none());
-
-        assert!(!changed_tree.get_child_ref_at(0).is_none());
-        assert!(!changed_tree.get_child_ref_at(1).is_none());
-        assert!(!changed_tree.get_child_ref_at(2).is_none());
-        assert!(changed_tree.get_child_ref_at(1).unwrap().get_value().to_int(0) == 2);
-    }
-
-    #[test]
     fn can_replace_entire_tree() {
         // The change is relative to an imaginary root, so replacing the child of . should replace the entire tree
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
