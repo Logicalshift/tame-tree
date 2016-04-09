@@ -629,41 +629,20 @@ mod change_tests {
         assert!(change.applies_to_only(&(1, (2, (3, 4))).to_tree_address()).unwrap());
     }
 
-    /*
-    #[test]
-    fn applies_to_only_true_for_exact_children_with_siblings() {
-        let change = TreeChange::new(&(0, (1, (2, 3))).to_tree_address(), TreeChangeType::Sibling, None::<&TreeRef>);
-
-        // Doesn't apply to things 'above' the change (the direct children of .1 are unaffected by the change)
-        assert!(!change.applies_to_only(&().to_tree_address()).unwrap());
-        assert!(!change.applies_to_only(&(1).to_tree_address()).unwrap());
-
-        // This will apply to the children of the .1.2 node
-        assert!(!change.applies_to_only(&(1, 2).to_tree_address()).unwrap());
-
-        // This change could affect the .1.2.3 node
-        assert!(change.applies_to_only(&(1, (2, 3)).to_tree_address()).unwrap());
-
-        // The .1.2.3.4 node could also be affected
-        assert!(change.applies_to_only(&(1, (2, (3, 4))).to_tree_address()).unwrap());
-
-        // The .1.2.1 node technically couldn't be affected, but we'll return it too
-        assert!(change.applies_to_only(&(1, (2, 1)).to_tree_address()).unwrap());
-    }
-
     #[test]
     fn applies_to_dispatches_to_correct_function() {
-        let change = TreeChange::new(&(0, (1, 2)).to_tree_address(), TreeChangeType::Child, None::<&TreeRef>);
+        let change = TreeChange::new(&(1, (2, 0)), &());
 
         assert!(change.applies_to(&1.to_tree_address(), &TreeExtent::SubTree).unwrap());
         assert!(change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::Children).unwrap());
-        assert!(change.applies_to(&(1, (2, 3)).to_tree_address(), &TreeExtent::ThisNode).unwrap());
+        assert!(change.applies_to(&(1, (2, 0)).to_tree_address(), &TreeExtent::ThisNode).unwrap());
 
         assert!(!change.applies_to(&2.to_tree_address(), &TreeExtent::SubTree).unwrap());
         assert!(!change.applies_to(&1.to_tree_address(), &TreeExtent::Children).unwrap());
         assert!(!change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::ThisNode).unwrap());
     }
 
+    /*
     #[test]
     fn relative_to_here_does_not_affect_change() {
         // The change is relative to an imaginary root, so replacing the child of . should replace the entire tree
