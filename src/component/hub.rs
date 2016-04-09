@@ -24,6 +24,7 @@
 use super::super::tree::*;
 use super::component::*;
 use super::bus_publisher::*;
+use super::immediate_publisher::*;
 
 ///
 /// 
@@ -32,7 +33,12 @@ pub struct Hub {
     ///
     /// Passes changes between components
     ///
-    publisher: TreeChangeBus
+    bus: TreeChangeBus,
+
+    ///
+    /// Components attached to this hub
+    ///
+    components: Vec<ComponentRef>
 }
 
 impl Hub {
@@ -40,7 +46,7 @@ impl Hub {
     /// Creates a new hub
     ///
     pub fn new() -> Hub {
-        Hub { publisher: TreeChangeBus::new() }
+        Hub { bus: TreeChangeBus::new(), components: vec![] }
     }
 
     ///
@@ -54,6 +60,37 @@ impl Hub {
     /// Returns a publisher that will write to a particular address relative to this hub
     ///
     pub fn publish_to<T: ToTreeAddress>(&mut self, address: &T) -> PublisherRef {
+        let publisher   = ImmediatePublisher::new();
+        let consumer    = publisher.create_consumer();
+
+        // consumer.subscribe()
+
         unimplemented!();
+    }
+
+    ///
+    /// Attaches a component that reads from 
+    ///
+    pub fn add_component<TComponent: ConvertToComponent, TFrom: ToTreeAddress, TTo: ToTreeAddress>(&mut self, component: TComponent, read_from: &TFrom, publish_to: &TTo) {
+        let consumer    = self.read_from(read_from);
+        let publisher   = self.publish_to(publish_to);
+
+        self.components.push(component.into_component(consumer, publisher));
+    }
+
+    ///
+    /// Pumps any messages waiting for this hub
+    ///
+    #[inline]
+    pub fn pump(&mut self) {
+        self.bus.pump();
+    }
+
+    ///
+    /// Processes messages for this hub until there are no more to be processed
+    ///
+    #[inline]
+    pub fn flush(&mut self) {
+        self.bus.flush();
     }
 }
