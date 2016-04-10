@@ -277,11 +277,21 @@ impl TreeChange {
         } else {
             // The changes are within the change tree: we need to generate a new tree
             if let TreeReplacement::NewNode(ref tree) = self.replacement {
-                // Just navigate to this address within the tree
-                let relative_to_tree_maybe = address.relative_to(&self.address);
+                // Use a tree with the target tree as the parent (except when the root is being changed)
+                let parent_of_change: TreeRef = match self.address {
+                    TreeAddress::Here   => tree.clone(),
+                    _                   => Rc::new(BasicTree::new("", (), Some(tree.clone()), None))
+                };
+
+                // Get the address relative to the parent of the change (direct address if we're changing the root)
+                let relative_to_tree_maybe = match self.address {
+                    TreeAddress::Here   => Some(address.clone()),
+                    _                   => address.relative_to(&self.address.parent())
+                };
 
                 if let Some(relative_to_tree) = relative_to_tree_maybe {
-                    let new_tree_maybe = tree.get_child_ref_at(relative_to_tree);
+                    // TODO: adjust the relative address to look up the correct index
+                    let new_tree_maybe = parent_of_change.get_child_ref_at(relative_to_tree);
 
                     if let Some(new_tree) = new_tree_maybe {
                         Some(TreeChange::new(&TreeAddress::Here, &TreeReplacement::NewNode(new_tree)))
@@ -589,6 +599,19 @@ mod change_tests {
     fn relative_to_works_when_change_is_sibling() {
         let original_change = TreeChange::new(&1, &("new_child", 4).to_tree_node().with_sibling_node(Some(&("new_child_2", 5).to_tree_node())));
         let relative_change = original_change.relative_to(&2.to_tree_address()).unwrap();
+
+        assert!(relative_change.applies_to(&().to_tree_address(), &TreeExtent::SubTree).unwrap());
+
+        let original_tree   = ("empty").to_tree_node();
+        let altered_tree    = relative_change.apply(&original_tree);
+
+        assert!(altered_tree.get_value().to_int(0) == 5);
+    }
+
+    #[test]
+    fn relative_to_works_when_change_is_sibling_tagged() {
+        let original_change = TreeChange::new(&"one", &("new_child", 4).to_tree_node().with_sibling_node(Some(&("new_child_2", 5).to_tree_node())));
+        let relative_change = original_change.relative_to(&"new_child_2".to_tree_address()).unwrap();
 
         assert!(relative_change.applies_to(&().to_tree_address(), &TreeExtent::SubTree).unwrap());
 
