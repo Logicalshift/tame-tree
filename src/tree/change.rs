@@ -326,6 +326,31 @@ mod change_tests {
     }
 
     #[test]
+    fn can_apply_remove_indexed() {
+        let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
+        let change_two      = TreeChange::new(&1, &TreeReplacement::Remove);
+        let changed_tree    = change_two.apply(&initial_tree);
+
+        assert!(changed_tree.get_child_ref_at(0).unwrap().get_value().to_int(0) == 1);
+        assert!(changed_tree.get_child_ref_at(1).unwrap().get_value().to_int(0) == 3);
+        assert!(changed_tree.get_child_ref_at(1).unwrap().get_sibling_ref().is_none());
+        assert!(changed_tree.get_child_ref_at(2).is_none());
+    }
+
+    #[test]
+    fn can_apply_new_value_indexed() {
+        let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
+        let change_two      = TreeChange::new(&1, &TreeReplacement::NewValue("replaced".to_string(), 4.to_tree_value()));
+        let changed_tree    = change_two.apply(&initial_tree);
+
+        assert!(changed_tree.get_child_ref_at(0).unwrap().get_value().to_int(0) == 1);
+        assert!(changed_tree.get_child_ref_at(1).unwrap().get_value().to_int(0) == 4);
+        assert!(changed_tree.get_child_ref_at(2).unwrap().get_value().to_int(0) == 3);
+        assert!(changed_tree.get_child_ref_at(2).unwrap().get_sibling_ref().is_none());
+        assert!(changed_tree.get_child_ref_at(3).is_none());
+    }
+
+    #[test]
     fn can_add_child_indexed() {
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
         let change_two      = TreeChange::new(&(1, 0), &("new_child", 4));
