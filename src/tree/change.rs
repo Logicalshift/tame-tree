@@ -240,7 +240,11 @@ impl TreeChange {
     /// Corresponds to testing for an extent of `TreeExtent::ThisNode`
     ///
     pub fn applies_to_only(&self, address: &TreeAddress) -> Option<bool> {
-        self.address.is_parent_of(address)
+        if let TreeReplacement::NewValue(_, _) = self.replacement {
+            Some(self.address == *address)
+        } else {
+            self.address.is_parent_of(address)
+        }
     }
 
     ///
