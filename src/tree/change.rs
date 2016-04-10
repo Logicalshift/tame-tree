@@ -639,6 +639,8 @@ mod change_tests {
     #[test]
     fn relative_to_works_when_change_is_larger_tree_and_tagged() {
         // Change the child of ."root" to be the subtree one -> two -> three (ie, we get a tree .1.0.0.0)
+        // Original tree is .root.old...
+        // New tree is .root.one...
         let original_change = TreeChange::new(&("root", "old"), &tree!("one", tree!("two", tree!("three", "four"), "five")));
 
         // .root.one.two should represent the 'two' change
