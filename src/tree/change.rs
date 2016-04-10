@@ -332,6 +332,59 @@ mod change_tests {
     }
 
     #[test]
+    fn can_add_child_indexed() {
+        let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
+        let change_two      = TreeChange::new(&(1, 0), &("new_child", 4));
+        let changed_tree    = change_two.apply(&initial_tree);
+
+        assert!(changed_tree.get_child_ref_at((1,0).to_tree_address()).unwrap().get_value().to_int(0) == 4);
+
+        assert!(changed_tree.get_child_ref_at(0).unwrap().get_value().to_int(0) == 1);
+        assert!(changed_tree.get_child_ref_at(1).unwrap().get_value().to_int(0) == 2);
+        assert!(changed_tree.get_child_ref_at(2).unwrap().get_value().to_int(0) == 3);
+        assert!(changed_tree.get_child_ref_at(3).is_none());
+        assert!(changed_tree.get_child_ref_at(2).unwrap().get_sibling_ref().is_none());
+    }
+
+    #[test]
+    fn can_add_sibling_indexed() {
+        let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
+        let change_two      = TreeChange::new(&3, &("new_child", 4));
+        let changed_tree    = change_two.apply(&initial_tree);
+
+        assert!(changed_tree.get_child_ref_at(0).unwrap().get_value().to_int(0) == 1);
+        assert!(changed_tree.get_child_ref_at(1).unwrap().get_value().to_int(0) == 2);
+        assert!(changed_tree.get_child_ref_at(2).unwrap().get_value().to_int(0) == 3);
+        assert!(changed_tree.get_child_ref_at(3).unwrap().get_value().to_int(0) == 4);
+    }
+
+    #[test]
+    fn can_add_child_tagged() {
+        // Can address a non-existent node to add a new child or sibling
+        let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
+        let change_two      = TreeChange::new(&("one", "non_existent_node"), &("new_child", 4));
+        let changed_tree    = change_two.apply(&initial_tree);
+
+        assert!(changed_tree.get_child_ref_at("one").unwrap().get_value().to_int(0) == 1);
+        assert!(changed_tree.get_child_ref_at(("one", "new_child").to_tree_address()).unwrap().get_value().to_int(0) == 4);
+        assert!(changed_tree.get_child_ref_at("three").unwrap().get_value().to_int(0) == 3);
+    }
+
+    #[test]
+    fn can_add_sibling_tagged() {
+        // Can address a non-existent node to add a new child or sibling
+        // The indexed structure after this operation is currently ill-defined
+        let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
+        let change_two      = TreeChange::new(&"non_existent_node", &("new_child", 4));
+        let changed_tree    = change_two.apply(&initial_tree);
+
+        assert!(changed_tree.get_child_ref_at("one").unwrap().get_value().to_int(0) == 1);
+        assert!(changed_tree.get_child_ref_at("two").unwrap().get_value().to_int(0) == 2);
+        assert!(changed_tree.get_child_ref_at("three").unwrap().get_value().to_int(0) == 3);
+        assert!(changed_tree.get_child_ref_at("new_child").unwrap().get_value().to_int(0) == 4);
+    }
+
+    #[test]
     fn can_replace_entire_tree() {
         // The change is relative to an imaginary root, so replacing the child of . should replace the entire tree
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
