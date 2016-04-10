@@ -103,22 +103,6 @@ impl TreeChange {
     }
 
     ///
-    /// Returns how a replacement is applied to a particular tree node (or nothing) 
-    ///
-    fn perform_replacement(original: Option<&TreeRef>, replacement: &TreeReplacement) -> Option<TreeRef> {
-        match *replacement {
-            TreeReplacement::Remove                         => None,
-            TreeReplacement::NewNode(ref new_node)          => Some(new_node.clone()),
-            TreeReplacement::NewValue(ref tag, ref value)   => {
-                match original {
-                    None                    => Some(Rc::new(BasicTree::new(&*tag, value, None, None))),
-                    Some(original_ref)      => Some(Rc::new(BasicTree::new(&*tag, value, original_ref.get_child_ref(), original_ref.get_sibling_ref())))
-                }
-            }
-        }
-    }
-
-    ///
     /// Finds the final sibling of an item and replaces it with a new sibling
     ///
     fn replace_sibling(node: &Option<TreeRef>, new_sibling: &Option<TreeRef>) -> Option<TreeRef> {
@@ -152,6 +136,20 @@ impl TreeChange {
     }
 
     ///
+    /// Returns how a replacement is applied to a particular tree node (or nothing) 
+    ///
+    fn perform_replacement(original: Option<&TreeRef>, replacement: &TreeReplacement) -> Option<TreeRef> {
+        let original_sibling = original.and_then(|x| x.get_sibling_ref());
+        let original_child   = original.and_then(|x| x.get_child_ref());
+
+        match *replacement {
+            TreeReplacement::Remove                         => original_sibling,
+            TreeReplacement::NewNode(ref new_node)          => Self::replace_sibling(&Some(new_node.clone()), &original_sibling),
+            TreeReplacement::NewValue(ref tag, ref value)   => Some(Rc::new(BasicTree::new(&*tag, value, original_child, original_sibling)))
+        }
+    }
+
+    ///
     /// Performs the apply operation
     ///
     fn perform_apply(original: Option<&TreeRef>, address: &TreeAddress, replacement: &TreeReplacement) -> Option<TreeRef> {
@@ -174,10 +172,6 @@ impl TreeChange {
 
                 // Replace the child at this index
                 let mut new_child       = Self::perform_apply(current.as_ref(), &*child_address, replacement);
-
-                // Update its sibling to insert it into the existing tree
-                let following_sibling   = current.and_then(|x| x.get_sibling_ref());
-                new_child               = Self::replace_sibling(&new_child, &following_sibling);
 
                 // Pop siblings to generate the new child item
                 current = new_child;
