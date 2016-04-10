@@ -347,6 +347,25 @@ mod change_tests {
     }
 
     #[test]
+    fn can_insert_many_siblings_indexed() {
+        let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
+        let change_two      = TreeChange::new(&1, &("new_child", 4).to_tree_node().with_sibling_node(Some(&("new_child_2", 5).to_tree_node())));
+        let changed_tree    = change_two.apply(&initial_tree);
+
+        assert!(!changed_tree.get_child_ref_at(0).is_none());
+        assert!(!changed_tree.get_child_ref_at(1).is_none());
+        assert!(!changed_tree.get_child_ref_at(2).is_none());
+        assert!(!changed_tree.get_child_ref_at(3).is_none());
+        assert!(changed_tree.get_child_ref_at(4).is_none());
+
+        assert!(changed_tree.get_child_ref_at(0).unwrap().get_value().to_int(0) == 1);
+        assert!(changed_tree.get_child_ref_at(1).unwrap().get_value().to_int(0) == 4);
+        assert!(changed_tree.get_child_ref_at(2).unwrap().get_value().to_int(0) == 5);
+        assert!(changed_tree.get_child_ref_at(3).unwrap().get_value().to_int(0) == 3);
+        assert!(changed_tree.get_child_ref_at(3).unwrap().get_sibling_ref().is_none());
+    }
+
+    #[test]
     fn can_add_sibling_indexed() {
         let initial_tree    = tree!("test", ("one", 1), ("two", 2), ("three", 3));
         let change_two      = TreeChange::new(&3, &("new_child", 4));
@@ -525,6 +544,19 @@ mod change_tests {
         assert!(!relative_change.applies_to(&2.to_tree_address(), &TreeExtent::SubTree).unwrap());
         assert!(!relative_change.applies_to(&1.to_tree_address(), &TreeExtent::Children).unwrap());
         assert!(!relative_change.applies_to(&(1, 2).to_tree_address(), &TreeExtent::ThisNode).unwrap());
+    }
+
+    #[test]
+    fn relative_to_works_when_change_is_sibling() {
+        let original_change = TreeChange::new(&1, &("new_child", 4).to_tree_node().with_sibling_node(Some(&("new_child_2", 5).to_tree_node())));
+        let relative_change = original_change.relative_to(&2.to_tree_address()).unwrap();
+
+        assert!(relative_change.applies_to(&().to_tree_address(), &TreeExtent::SubTree).unwrap());
+
+        let original_tree   = ("empty").to_tree_node();
+        let altered_tree    = relative_change.apply(&original_tree);
+
+        assert!(altered_tree.get_value().to_int(0) == 5);
     }
 
     #[test]
