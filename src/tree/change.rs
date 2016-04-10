@@ -527,6 +527,22 @@ mod change_tests {
     }
 
     #[test]
+    fn applies_to_only_true_for_exact_item_if_change_is_value_only() {
+        let change = TreeChange::new(&(1, 2), &TreeReplacement::NewValue("new_value".to_string(), 1.to_tree_value()));
+
+        // Doesn't apply to things 'above' the change (the direct children of .1 are unaffected by the change)
+        assert!(!change.applies_to_only(&().to_tree_address()).unwrap());
+        assert!(!change.applies_to_only(&(1).to_tree_address()).unwrap());
+
+        // This will apply to the 1.2 node
+        assert!(change.applies_to_only(&(1, 2).to_tree_address()).unwrap());
+
+        // As this is replacing the value of a single node, it won't apply to subtrees
+        assert!(!change.applies_to_only(&(1, (2, 3)).to_tree_address()).unwrap());
+        assert!(!change.applies_to_only(&(1, (2, (3, 4))).to_tree_address()).unwrap());
+    }
+
+    #[test]
     fn applies_to_dispatches_to_correct_function() {
         let change = TreeChange::new(&(1, (2, 0)), &());
 
