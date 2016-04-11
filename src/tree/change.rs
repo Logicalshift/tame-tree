@@ -259,6 +259,19 @@ impl TreeChange {
     }
 
     ///
+    /// Generates a `NewNode` change using an address relative to an existing tree
+    ///
+    fn relative_to_tree(tree: &TreeRef, address: TreeAddress) -> Option<TreeChange> {
+        let new_tree_maybe = tree.get_child_ref_at(address);
+
+        if let Some(new_tree) = new_tree_maybe {
+            Some(TreeChange::new(&TreeAddress::Here, &TreeReplacement::NewNode(new_tree)))
+        } else {
+            None
+        }
+    }
+
+    ///
     /// Creates a new tree change that's relative to a subtree of the tree this change is for
     ///
     /// Ie, this reduces the scope of the change. If this change is for `.1.2.`, then asking for
@@ -291,13 +304,7 @@ impl TreeChange {
 
                 if let Some(relative_to_tree) = relative_to_tree_maybe {
                     // TODO: adjust the relative address to look up the correct index
-                    let new_tree_maybe = parent_of_change.get_child_ref_at(relative_to_tree);
-
-                    if let Some(new_tree) = new_tree_maybe {
-                        Some(TreeChange::new(&TreeAddress::Here, &TreeReplacement::NewNode(new_tree)))
-                    } else {
-                        None
-                    }
+                    Self::relative_to_tree(&parent_of_change, relative_to_tree)
                 } else {
                     None
                 }
