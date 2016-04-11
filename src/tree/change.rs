@@ -272,6 +272,28 @@ impl TreeChange {
     }
 
     ///
+    ///
+    fn adjust_root_address_for_partial_tree(&self, tree_address: &TreeAddress) -> Option<TreeAddress> {
+        match *tree_address {
+            TreeAddress::ChildAtIndex(index, ref remaining) => {
+                match *self.address.last_part() {
+                    TreeAddress::ChildAtIndex(our_index, _) => {
+                        if (our_index <= index) {
+                            Some(TreeAddress::ChildAtIndex(index - our_index, remaining.clone()))
+                        } else {
+                            None
+                        }
+                    },
+
+                    _ => None
+                }
+            },
+
+            _ => Some(tree_address.clone())
+        }
+    }
+
+    ///
     /// Creates a new tree change that's relative to a subtree of the tree this change is for
     ///
     /// Ie, this reduces the scope of the change. If this change is for `.1.2.`, then asking for
@@ -299,10 +321,9 @@ impl TreeChange {
                     _ => {
                         // If the change affects sibligs or replaces a node, we need to navigate a tree containing the change
                         let parent_of_change: TreeRef   = Rc::new(BasicTree::new("", (), Some(tree.clone()), None));
-                        let relative_to_tree_maybe      = address.relative_to(&self.address.parent());
+                        let relative_to_tree_maybe      = address.relative_to(&self.address.parent()).and_then(|x| self.adjust_root_address_for_partial_tree(&x));
 
                         if let Some(relative_to_tree) = relative_to_tree_maybe {
-                            // TODO: adjust the relative address to look up the correct index
                             Self::relative_to_tree(&parent_of_change, relative_to_tree)
                         } else {
                             None
