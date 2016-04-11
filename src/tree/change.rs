@@ -290,23 +290,24 @@ impl TreeChange {
         } else {
             // The changes are within the change tree: we need to generate a new tree
             if let TreeReplacement::NewNode(ref tree) = self.replacement {
-                // Use a tree with the target tree as the parent (except when the root is being changed)
-                let parent_of_change: TreeRef = match self.address {
-                    TreeAddress::Here   => tree.clone(),
-                    _                   => Rc::new(BasicTree::new("", (), Some(tree.clone()), None))
-                };
+                match self.address {
+                    TreeAddress::Here => {
+                        // This change is already a straight up tree replacement
+                        Self::relative_to_tree(tree, address.clone())
+                    },
 
-                // Get the address relative to the parent of the change (direct address if we're changing the root)
-                let relative_to_tree_maybe = match self.address {
-                    TreeAddress::Here   => Some(address.clone()),
-                    _                   => address.relative_to(&self.address.parent())
-                };
+                    _ => {
+                        // If the change affects sibligs or replaces a node, we need to navigate a tree containing the change
+                        let parent_of_change: TreeRef   = Rc::new(BasicTree::new("", (), Some(tree.clone()), None));
+                        let relative_to_tree_maybe      = address.relative_to(&self.address.parent());
 
-                if let Some(relative_to_tree) = relative_to_tree_maybe {
-                    // TODO: adjust the relative address to look up the correct index
-                    Self::relative_to_tree(&parent_of_change, relative_to_tree)
-                } else {
-                    None
+                        if let Some(relative_to_tree) = relative_to_tree_maybe {
+                            // TODO: adjust the relative address to look up the correct index
+                            Self::relative_to_tree(&parent_of_change, relative_to_tree)
+                        } else {
+                            None
+                        }
+                    }
                 }
             } else {
                 // Other change types don't create a tree so there is no result
