@@ -241,7 +241,7 @@ impl<TIn, TOut> ComponentEndPoint<TIn, TOut>
     ///
     #[inline]
     pub fn send(&mut self, data: TIn) {
-        self.input.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&data.to_tree_node())));
+        self.input.publish(TreeChange::new(&(), &data.to_tree_node()));
     }
 
     ///
