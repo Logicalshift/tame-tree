@@ -185,7 +185,7 @@ mod bus_publisher_tests {
 
         let _add_component          = add_one.into_component(input_consumer, output_publisher);
 
-        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&1.to_tree_node())));
+        input_publisher.publish(TreeChange::new(&(), &1));
         input_bus.pump();
         let output = output_reader();
         assert!(output.get_value().to_int(0) == 2);
@@ -203,14 +203,14 @@ mod bus_publisher_tests {
         // Feedback component that sends a message back to itself to reduce the value if it's greater than 0
         let tend_to_zero            = component_fn_mut(move |x: &i32| { 
             if *x > 0 {
-                feedback_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&(x-1).to_tree_node())));
+                feedback_publisher.publish(TreeChange::new(&(), &(x-1)));
             }
             *x
         });
 
         let _becomes_zero_component = tend_to_zero.into_component(input_consumer, output_publisher);
 
-        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&10.to_tree_node())));
+        input_publisher.publish(TreeChange::new(&(), &10));
         input_bus.pump();
         assert!(output_reader().get_value().to_int(0) == 10);
 
