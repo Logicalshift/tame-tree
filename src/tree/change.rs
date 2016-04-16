@@ -171,7 +171,7 @@ impl TreeChange {
                 }
 
                 // Replace the child at this index
-                let mut new_child       = Self::perform_apply(current.as_ref(), &*child_address, replacement);
+                let new_child       = Self::perform_apply(current.as_ref(), &*child_address, replacement);
 
                 // Pop siblings to generate the new child item
                 current = new_child;
@@ -184,7 +184,38 @@ impl TreeChange {
             },
 
             TreeAddress::ChildWithTag(ref child_tag, ref child_address) => {
-                unimplemented!();
+                // Copy the siblings into a stack
+                let mut siblings    = vec![];
+                let mut current     = original.and_then(|x| x.get_child_ref());
+
+                loop {
+                    if let Some(ref node) = current {
+                        if node.get_tag() == child_tag {
+                            // current is the node to be replaced
+                            break;
+                        }
+                    } else {
+                        // Out of nodes (we'll just add to the end of the tree)
+                        break;
+                    }
+
+                    // Add this to the list of siblings to rebuild, and move to the next item
+                    siblings.push(current.clone().unwrap_or_else(|| Rc::new(BasicTree::new("", (), None, None))));
+
+                    current = current.and_then(|x| x.get_sibling_ref());
+                }
+
+                // Replace the child with this tag
+                let new_child       = Self::perform_apply(current.as_ref(), &*child_address, replacement);
+
+                // Pop siblings to generate the new child item
+                current = new_child;
+                while let Some(sibling) = siblings.pop() {
+                    current = Some(sibling.with_sibling_node(current.as_ref()));
+                }
+
+                // Result is the original node with the new child node
+                original.and_then(|x| Some(x.with_child_node(current.as_ref())))
             }
         }
     }
@@ -278,7 +309,7 @@ impl TreeChange {
             TreeAddress::ChildAtIndex(index, ref remaining) => {
                 match *self.address.last_part() {
                     TreeAddress::ChildAtIndex(our_index, _) => {
-                        if (our_index <= index) {
+                        if our_index <= index {
                             Some(TreeAddress::ChildAtIndex(index - our_index, remaining.clone()))
                         } else {
                             None
