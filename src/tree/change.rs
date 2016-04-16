@@ -381,7 +381,7 @@ mod change_tests {
 
         assert!(changed_tree.get_child_ref_at("one").unwrap().get_value().to_int(0) == 1);
         assert!(changed_tree.get_child_ref_at("replaced").unwrap().get_value().to_int(0) == 4);
-        assert!(changed_tree.get_child_ref_at("replaced").unwrap().get_sibling_ref().is_none());
+        assert!(!changed_tree.get_child_ref_at("replaced").unwrap().get_sibling_ref().is_none());
         assert!(changed_tree.get_child_ref_at("two").is_none());
         assert!(!changed_tree.get_child_ref_at("three").is_none());
     }
