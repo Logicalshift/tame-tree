@@ -155,7 +155,7 @@ impl ConvertToComponent for Box<Fn(&TreeRef) -> TreeRef> {
 
             let new_tree = action(&tree);
 
-            our_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&new_tree)));
+            our_publisher.publish(TreeChange::new(&TreeAddress::Here, &new_tree));
         }));
 
         return Rc::new(FunctionComponent);
@@ -183,7 +183,7 @@ impl ConvertToComponent for Box<FnMut(&TreeRef) -> TreeRef> {
 
             let new_tree = action(&tree);
 
-            our_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&new_tree)));
+            our_publisher.publish(TreeChange::new(&TreeAddress::Here, &new_tree));
         }));
 
         return Rc::new(FunctionComponent);
@@ -210,7 +210,7 @@ impl<TIn: 'static + DecodeFromTreeNode, TOut: 'static + ToTreeNode> ConvertToCom
                 let new_object  = action(&decoded);
                 let new_tree    = new_object.to_tree_node();
 
-                our_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&new_tree)));
+                our_publisher.publish(TreeChange::new(&TreeAddress::Here, &new_tree));
             }
         }));
 
