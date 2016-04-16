@@ -368,11 +368,11 @@ mod component_function_tests {
         let result_reader       = output_publisher.get_tree_reader();
         
         let _component = to_component(consumer, output_publisher, |_change: &TreeChange| {
-            TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"passed".to_tree_node())) 
+            TreeChange::new(&(), &"passed") 
         });
 
         // Publish something to our function
-        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&"test".to_tree_node())));
+        input_publisher.publish(TreeChange::new(&(), &"test"));
 
         // Check that the output was 'passed'
         let result = result_reader();
@@ -392,7 +392,7 @@ mod component_function_tests {
         });
 
         // Publish something to our function
-        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&"passed".to_tree_node())));
+        input_publisher.publish(TreeChange::new(&(), &"passed"));
 
         // Check that the output was 'passed'
         let result = result_reader();
@@ -425,7 +425,7 @@ mod component_function_tests {
         });
 
         // Publish something to our function
-        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&InputTree { a: 1, b: 2 }.to_tree_node())));
+        input_publisher.publish(TreeChange::new(&(), &InputTree { a: 1, b: 2 }));
 
         // Check that the output was 'passed'
         let result = result_reader();
