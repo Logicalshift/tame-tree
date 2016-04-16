@@ -132,7 +132,7 @@
 //! # let _active_component     = component.into_component(input_consumer, output_publisher);
 //! let mut receiver: RecvFn<ResultTree> = consumer.get_receiver();
 //!
-//! publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&InputTree { a: 4, b: 7 }.to_tree_node())));
+//! publisher.publish(TreeChange::new(&(), &InputTree { a: 4, b: 7 }));
 //! let result_tree = receiver();           // == Some(12) for our test component
 //! # assert!(result_tree.unwrap().result == 11);
 //! # }

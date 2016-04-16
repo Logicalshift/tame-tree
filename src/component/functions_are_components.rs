@@ -67,7 +67,7 @@
 //! # let consumer          = input_publisher.create_consumer();
 //! # let publisher         = ImmediatePublisher::new();
 //! let component = to_component(consumer, publisher, |_change: &TreeChange| { 
-//!    TreeChange::new(&(), TreeChangeType::Child, None::<&TreeRef>)
+//!    TreeChange::new(&(), &())
 //! });
 //! ```
 //!
