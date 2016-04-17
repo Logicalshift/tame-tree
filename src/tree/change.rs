@@ -46,7 +46,7 @@
 //!
 //! ```
 //! # use tametree::tree::*;
-//! let change = TreeChange::new(&TreeAddress::Here, &TreeReplacement::NewNode(("Hello", "World").to_tree_node()))
+//! let change = TreeChange::new(&TreeAddress::Here, &TreeReplacement::NewNode(("Hello", "World").to_tree_node()));
 //! ```
 //!
 //! There are a few useful functions for manipulating tree changes. The first of these is `apply`, which takes a 
