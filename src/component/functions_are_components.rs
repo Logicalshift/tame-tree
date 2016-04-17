@@ -67,7 +67,7 @@
 //! # let consumer          = input_publisher.create_consumer();
 //! # let publisher         = ImmediatePublisher::new();
 //! let component = to_component(consumer, publisher, |_change: &TreeChange| { 
-//!    TreeChange::new(&(), TreeChangeType::Child, None::<&TreeRef>)
+//!    TreeChange::new(&(), &())
 //! });
 //! ```
 //!
@@ -155,7 +155,7 @@ impl ConvertToComponent for Box<Fn(&TreeRef) -> TreeRef> {
 
             let new_tree = action(&tree);
 
-            our_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&new_tree)));
+            our_publisher.publish(TreeChange::new(&TreeAddress::Here, &new_tree));
         }));
 
         return Rc::new(FunctionComponent);
@@ -183,7 +183,7 @@ impl ConvertToComponent for Box<FnMut(&TreeRef) -> TreeRef> {
 
             let new_tree = action(&tree);
 
-            our_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&new_tree)));
+            our_publisher.publish(TreeChange::new(&TreeAddress::Here, &new_tree));
         }));
 
         return Rc::new(FunctionComponent);
@@ -210,7 +210,7 @@ impl<TIn: 'static + DecodeFromTreeNode, TOut: 'static + ToTreeNode> ConvertToCom
                 let new_object  = action(&decoded);
                 let new_tree    = new_object.to_tree_node();
 
-                our_publisher.publish(TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&new_tree)));
+                our_publisher.publish(TreeChange::new(&TreeAddress::Here, &new_tree));
             }
         }));
 
@@ -368,11 +368,11 @@ mod component_function_tests {
         let result_reader       = output_publisher.get_tree_reader();
         
         let _component = to_component(consumer, output_publisher, |_change: &TreeChange| {
-            TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&"passed".to_tree_node())) 
+            TreeChange::new(&(), &"passed") 
         });
 
         // Publish something to our function
-        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&"test".to_tree_node())));
+        input_publisher.publish(TreeChange::new(&(), &"test"));
 
         // Check that the output was 'passed'
         let result = result_reader();
@@ -392,7 +392,7 @@ mod component_function_tests {
         });
 
         // Publish something to our function
-        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&"passed".to_tree_node())));
+        input_publisher.publish(TreeChange::new(&(), &"passed"));
 
         // Check that the output was 'passed'
         let result = result_reader();
@@ -425,7 +425,7 @@ mod component_function_tests {
         });
 
         // Publish something to our function
-        input_publisher.publish(TreeChange::new(&(), TreeChangeType::Child, Some(&InputTree { a: 1, b: 2 }.to_tree_node())));
+        input_publisher.publish(TreeChange::new(&(), &InputTree { a: 1, b: 2 }));
 
         // Check that the output was 'passed'
         let result = result_reader();

@@ -139,7 +139,7 @@ mod immediate_publisher_tests {
         let just_add = ("add", 1).to_tree_node();
 
         // Change the child of the second child of the root to the 'just_add' tree
-        let modify_child_of_subscribed_tree = TreeChange::new(&(0, 1).to_tree_address(), TreeChangeType::Child, Some(&just_add));
+        let modify_child_of_subscribed_tree = TreeChange::new(&(1, 0).to_tree_address(), &just_add);
         assert!(!modify_child_of_subscribed_tree.relative_to(&1.to_tree_address()).is_none());
         publisher.publish(modify_child_of_subscribed_tree);
 
@@ -149,7 +149,7 @@ mod immediate_publisher_tests {
         let whole_tree = tree!("root", "some_other_tree", tree!("consumer_target", ("add", 2)));
 
         // Replace the entire tree with the tree above
-        let modify_entire_tree = TreeChange::new(&TreeAddress::Here, TreeChangeType::Child, Some(&whole_tree));
+        let modify_entire_tree = TreeChange::new(&TreeAddress::Here, &whole_tree);
         publisher.publish(modify_entire_tree);
 
         assert!(our_count.get() == 3);
