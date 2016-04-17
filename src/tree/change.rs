@@ -14,6 +14,51 @@
 //   limitations under the License.
 //
 
+//!
+//! # Change
+//!
+//! TameTree components communicate by indicating to each other how their output tree has changed. These changes
+//! are represented by the `TreeChange` type. By only communicating differences, it becomes possible for components
+//! to have very large output trees but still communicate efficiently. Additionally, it makes it possible to have
+//! 'virtual' trees which are never kept in memory as the components only act upon their changes.
+//!
+//! The description of a change consists of two parts: an address and its replacement value. The node at the address
+//! is removed from the tree and the new value substituted. There are three types of change: `TreeReplacement::Remove`
+//! is used to remove the node at the specified address entirely, `TreeReplacement::NewNode()` replaces the node with
+//! an entire new subtree and `TreeReplacement::NewValue()` updates the value for a node without changing its subtree.
+//!
+//! `TreeReplacement::NewNode()` can be targeted at an index following the last child of a node if it's necessary to
+//! add new nodes to the tree.
+//!
+//! Changes are created using `TreeChange::new()`. This takes two parameters, one that implements `ToTreeAddress` and
+//! one that implements `ToTreeReplacement` - the basic type of these parameters is `TreeAddress` and `TreeReplacement`
+//! but the use of these helper interfaces makes it possible to be more concise.
+//!
+//! For small components, the simplest and most common replacement is to update the entire tree at once.
+//!
+//! ```
+//! # use tametree::tree::*;
+//! let change = TreeChange::new(&(), &("Hello", "World"));
+//! ```
+//!
+//! The void object `()` converts to the root address of the tree, and `("Hello", "World")` converts to a single tree
+//! node via the `ToTreenNode` interface. This could also be written using the types directly as:
+//!
+//! ```
+//! # use tametree::tree::*;
+//! let change = TreeChange::new(&TreeAddress::Here, &TreeReplacement::NewNode(("Hello", "World").to_tree_node()))
+//! ```
+//!
+//! There are a few useful functions for manipulating tree changes. The first of these is `apply`, which takes a 
+//! `TreeRef` and applies the change to it, returning an updated `TreeRef` containing the new tree.
+//!
+//! The next is `relative_to` which adjusts a change so that it's relative to a different parent node: this is useful
+//! when moving changes between trees.
+//!
+//! Finally, there is `applies_to` which works out if a change can apply to a particular tree node or region, so a
+//! component can determine if a change is one that it's interested in.
+//! 
+
 use std::rc::*;
 
 use super::address::*;
