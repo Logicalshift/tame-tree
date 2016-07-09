@@ -53,7 +53,21 @@ impl Hub {
     /// Returns a consumer that will read from a particular address relative to this hub
     ///
     pub fn read_from<T: ToTreeAddress>(&mut self, address: &T) -> ConsumerRef {
-        unimplemented!();
+        // TODO: smarter routing that doesn't respond to every single event
+        // TODO: ensure we stop listening when the ConsumerRef is released
+
+        // Create an immediate publisher to push changes to
+        let mut publisher   = ImmediatePublisher::new();
+        let consumer        = publisher.create_consumer();
+
+        let target_address  = address.to_tree_address();
+
+        // Push changes to the consumer when the bus changes
+        self.bus.create_consumer().subscribe(target_address, TreeExtent::SubTree, Box::new(move |change| {
+            publisher.publish(change.clone());
+        }));
+
+        consumer
     }
 
     ///

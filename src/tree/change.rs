@@ -138,6 +138,12 @@ pub struct TreeChange {
     replacement: TreeReplacement
 }
 
+impl Clone for TreeChange {
+    fn clone(&self) -> TreeChange {
+        TreeChange { address: self.address.clone(), replacement: self.replacement.clone() }
+    }
+}
+
 impl TreeChange {
     ///
     /// Creates a new tree change
