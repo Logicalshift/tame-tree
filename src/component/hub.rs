@@ -60,12 +60,20 @@ impl Hub {
     /// Returns a publisher that will write to a particular address relative to this hub
     ///
     pub fn publish_to<T: ToTreeAddress>(&mut self, address: &T) -> PublisherRef {
-        let publisher   = ImmediatePublisher::new();
-        let consumer    = publisher.create_consumer();
+        let publisher           = ImmediatePublisher::new();
+        let mut consumer        = publisher.create_consumer();
+        let mut bus_publisher   = self.bus.create_publisher();
+        let target_address      = address.to_tree_address();
 
-        let subscription = consumer.subscribe()
+        consumer.subscribe(TreeAddress::Here, TreeExtent::SubTree, Box::new(move |change| {
+            let relative_change = change.relative_to(&target_address);
 
-        unimplemented!();
+            if let Some(relative_change) = relative_change {
+                bus_publisher.publish(relative_change);
+            }
+        }));
+
+        publisher
     }
 
     ///
