@@ -63,13 +63,13 @@ impl Hub {
         let publisher   = ImmediatePublisher::new();
         let consumer    = publisher.create_consumer();
 
-        // consumer.subscribe()
+        let subscription = consumer.subscribe()
 
         unimplemented!();
     }
 
     ///
-    /// Attaches a component that reads from 
+    /// Attaches a component that reads from a particular address and publishes its results to another
     ///
     pub fn add_component<TComponent: ConvertToComponent, TFrom: ToTreeAddress, TTo: ToTreeAddress>(&mut self, component: TComponent, read_from: &TFrom, publish_to: &TTo) {
         let consumer    = self.read_from(read_from);
