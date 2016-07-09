@@ -60,8 +60,11 @@ impl Hub {
     /// Returns a publisher that will write to a particular address relative to this hub
     ///
     pub fn publish_to<T: ToTreeAddress>(&mut self, address: &T) -> PublisherRef {
+        // We use an immediate publish to relay changes to the tree
         let publisher           = ImmediatePublisher::new();
         let mut consumer        = publisher.create_consumer();
+
+        // Whenever the user publishes to the immediate publisher, generate a tree publish event
         let mut bus_publisher   = self.bus.create_publisher();
         let target_address      = address.to_tree_address();
 
